@@ -23,7 +23,8 @@ export function ThemeToggle({ collapsed = false }: { collapsed?: boolean }) {
     return (
         <button
             onClick={() => setTheme(isDark ? "light" : "dark")}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 cursor-pointer"
+            className={`w-full flex items-center rounded-xl text-sm transition-all duration-200 cursor-pointer ${collapsed ? 'justify-center py-2.5 px-0' : 'justify-center gap-2 px-3 py-2.5'
+                }`}
             style={{
                 color: "var(--text-primary)",
                 background: "rgba(99, 102, 241, 0.08)",

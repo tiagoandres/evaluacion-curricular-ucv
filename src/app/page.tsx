@@ -22,13 +22,18 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen grid-bg">
-      <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
+      <Sidebar
+        activeModule={activeModule}
+        onModuleChange={setActiveModule}
+        collapsed={sidebarCollapsed}
+        onCollapse={setSidebarCollapsed}
+      />
 
       {/* Main content */}
       <main
         className="flex-1 transition-all duration-300 ease-out"
         style={{
-          marginLeft: '280px', // sidebar width
+          marginLeft: sidebarCollapsed ? '80px' : '300px', // Updated open width to 300px for more room
           padding: '40px 60px',
         }}
       >
