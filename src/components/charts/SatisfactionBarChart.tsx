@@ -24,7 +24,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
         return (
             <div className="custom-tooltip">
                 <p className="label">{label}</p>
-                <p className="value">{`Índice: ${payload[0].value.toFixed(2)}`}</p>
+                <p className="value">{`Calidad: ${payload[0].value.toFixed(2)}`}</p>
             </div>
         );
     }
@@ -39,18 +39,18 @@ export default function SatisfactionBarChart({ data, isByAsignatura = false }: P
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
-            className="glow-card p-8 flex flex-col justify-between"
+            className="glow-card p-5 flex flex-col justify-between"
         >
             <h3 className="text-sm font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
-                {isByAsignatura ? 'Índice de Satisfacción por Asignatura' : 'Índice de Satisfacción por Ciclo'}
+                {isByAsignatura ? 'Calidad por Asignatura' : 'Calidad por Ciclo'}
             </h3>
-            <p className="text-sm mb-6 font-medium" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-xs mb-4 font-medium" style={{ color: 'var(--text-secondary)' }}>
                 {isByAsignatura
-                    ? 'Comparativa del índice de satisfacción entre asignaturas de la mención'
-                    : 'Comparativa del índice de satisfacción entre Ciclo Básico, Mención y Teorías Psicológicas'
+                    ? 'Comparativa de la calidad de unidad curricular entre asignaturas de la mención'
+                    : 'Comparativa de calidad entre Ciclo Básico, Mención y Teorías Psicológicas'
                 }
             </p>
-            <div className="w-full h-[280px]">
+            <div className="w-full h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                         data={data}

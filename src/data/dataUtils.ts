@@ -1,10 +1,10 @@
-import { SurveyEntry, Ciclo, Mencion, surveyData, cicloBasicoCourses, mencionCourses, teoriasPsicologicas } from './mockData';
+import { SurveyEntry } from './mockData';
 
 // Filter data by cycle and/or mention
 export function filterData(
     data: SurveyEntry[],
-    ciclo?: Ciclo | 'all',
-    mencion?: Mencion | 'all'
+    ciclo?: string | 'all',
+    mencion?: string | 'all'
 ): SurveyEntry[] {
     let filtered = [...data];
     if (ciclo && ciclo !== 'all') {
@@ -60,47 +60,27 @@ export function getGenderDistribution(data: SurveyEntry[]): { genero: string; ca
     }));
 }
 
-// Calculate dimension scores (average of Likert items, converted to 0-10 scale)
-function likertToScale(value: number): number {
-    // Likert 1-5 → scale 0-10
-    return ((value - 1) / 4) * 10;
-}
-
 export function getGestionScore(data: SurveyEntry[]): number {
     if (data.length === 0) return 0;
-    const sum = data.reduce((acc, d) => {
-        const avg = (d.gestion_programa_presentado + d.gestion_programa_cumplido +
-            d.gestion_objetivos_claros + d.gestion_coherencia_plan + d.gestion_pensamiento_critico) / 5;
-        return acc + likertToScale(avg);
-    }, 0);
+    const sum = data.reduce((acc, d) => acc + (d.gestionScore || 0), 0);
     return parseFloat((sum / data.length).toFixed(2));
 }
 
 export function getContenidosScore(data: SurveyEntry[]): number {
     if (data.length === 0) return 0;
-    const sum = data.reduce((acc, d) => {
-        const avg = (d.contenidos_profundidad + d.contenidos_organizacion +
-            d.contenidos_bibliografia + d.contenidos_objetivos_cumplidos + d.contenidos_estrategias) / 5;
-        return acc + likertToScale(avg);
-    }, 0);
+    const sum = data.reduce((acc, d) => acc + (d.contenidosScore || 0), 0);
     return parseFloat((sum / data.length).toFixed(2));
 }
 
 export function getEvaluacionScore(data: SurveyEntry[]): number {
     if (data.length === 0) return 0;
-    const sum = data.reduce((acc, d) => {
-        const avg = (d.evaluacion_metodos + d.evaluacion_retroalimentacion) / 2;
-        return acc + likertToScale(avg);
-    }, 0);
+    const sum = data.reduce((acc, d) => acc + (d.evaluacionScore || 0), 0);
     return parseFloat((sum / data.length).toFixed(2));
 }
 
 export function getDesempenoDocenteScore(data: SurveyEntry[]): number {
     if (data.length === 0) return 0;
-    const sum = data.reduce((acc, d) => {
-        const avg = (d.docente_dominio + d.docente_participacion + d.docente_puntualidad) / 3;
-        return acc + likertToScale(avg);
-    }, 0);
+    const sum = data.reduce((acc, d) => acc + (d.desempenoScore || 0), 0);
     return parseFloat((sum / data.length).toFixed(2));
 }
 
@@ -113,36 +93,36 @@ export function getRadarData(data: SurveyEntry[]) {
     ];
 }
 
-// Satisfaction index = sum of 4 dimension scores
-export function getSatisfactionIndex(data: SurveyEntry[]): number {
-    return parseFloat((
-        getGestionScore(data) +
-        getContenidosScore(data) +
-        getEvaluacionScore(data) +
-        getDesempenoDocenteScore(data)
-    ).toFixed(2));
+// Satisfaction index -> Calidad Unidad Curricular
+export function getCalidadCurricular(data: SurveyEntry[]): number {
+    if (data.length === 0) return 0;
+    const sum = data.reduce((acc, d) => acc + (Number(d.calidad_unidad_curricular) || 0), 0);
+    return parseFloat((sum / data.length).toFixed(2));
 }
 
 // Satisfaction by cycle (for bar chart)
 export function getSatisfactionByCycle(allData: SurveyEntry[]) {
-    const ciclos: Ciclo[] = ['Ciclo Básico', 'Mención', 'Teorías Psicológicas'];
+    const ciclosLocales = new Set(allData.map(d => d.ciclo).filter(c => c));
+    const ciclos: string[] = Array.from(ciclosLocales);
+
     return ciclos.map(ciclo => {
         const filtered = allData.filter(d => d.ciclo === ciclo);
         return {
             ciclo,
-            indice: getSatisfactionIndex(filtered),
+            indice: getCalidadCurricular(filtered),
         };
     });
 }
 
 // Satisfaction by asignatura for a specific mention
-export function getSatisfactionByAsignatura(data: SurveyEntry[], mencion: Mencion) {
-    const courses = mencionCourses[mencion];
-    return courses.map(course => {
-        const filtered = data.filter(d => d.asignatura === course.asignatura);
+export function getSatisfactionByAsignatura(data: SurveyEntry[], mencion: string) {
+    const filteredForMention = data.filter(d => d.mencion === mencion);
+    const courses = [...new Set(filteredForMention.map(d => d.asignatura))];
+    return courses.map(asignatura => {
+        const filtered = filteredForMention.filter(d => d.asignatura === asignatura);
         return {
-            asignatura: course.asignatura,
-            indice: filtered.length > 0 ? getSatisfactionIndex(filtered) : 0,
+            asignatura: asignatura,
+            indice: filtered.length > 0 ? getCalidadCurricular(filtered) : 0,
         };
     });
 }
@@ -160,7 +140,7 @@ export function getTopCourses(data: SurveyEntry[], limit: number = 5) {
         // Get unique docentes
         const docentes = [...new Set(entries.map(e => e.docente))];
         const nps = getNPSDocente(entries);
-        const indice = getSatisfactionIndex(entries);
+        const indice = getCalidadCurricular(entries);
         return { asignatura, docentes: docentes.join(', '), indice, nps };
     });
 
@@ -170,11 +150,7 @@ export function getTopCourses(data: SurveyEntry[], limit: number = 5) {
 }
 
 // Get all unique mentions from data
-export function getUniqueMenciones(): Mencion[] {
-    return [
-        'Asesoramiento Psicológico y Orientación',
-        'Psicología Clínica',
-        'Psicología Escolar',
-        'Psicología Industrial y Organizacional',
-    ];
+export function getUniqueMenciones(data: SurveyEntry[]): string[] {
+    const menciones = new Set(data.map(d => d.mencion).filter(m => m));
+    return Array.from(menciones) as string[];
 }

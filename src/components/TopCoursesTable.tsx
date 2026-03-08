@@ -16,9 +16,9 @@ interface Props {
 }
 
 function getScoreColor(score: number): string {
-    if (score >= 30) return '#10b981';
-    if (score >= 25) return '#22d3ee';
-    if (score >= 20) return '#f59e0b';
+    if (score >= 90) return '#10b981';
+    if (score >= 75) return '#22d3ee';
+    if (score >= 60) return '#f59e0b';
     return '#ef4444';
 }
 
@@ -35,16 +35,16 @@ export default function TopCoursesTable({ data }: Props) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.7 }}
-            className="glow-card p-8"
+            className="glow-card p-5"
         >
             <div className="flex items-center gap-3 mb-2">
-                <Trophy size={18} style={{ color: '#f59e0b' }} />
+                <Trophy size={16} style={{ color: '#f59e0b' }} />
                 <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                    Top 5 Asignaturas Mejor Valoradas
+                    Top 5 Asignaturas (Mayor Calidad)
                 </h3>
             </div>
-            <p className="text-sm mb-6 font-medium" style={{ color: 'var(--text-secondary)' }}>
-                Asignaturas con mayor índice de satisfacción
+            <p className="text-xs mb-4 font-medium" style={{ color: 'var(--text-secondary)' }}>
+                Asignaturas con mayor calidad de unidad curricular
             </p>
 
             <div className="overflow-x-auto">
@@ -54,7 +54,7 @@ export default function TopCoursesTable({ data }: Props) {
                             <th>#</th>
                             <th>Asignatura</th>
                             <th>Docentes</th>
-                            <th>Índice de Satisfacción</th>
+                            <th>Calidad</th>
                             <th>NPS Docente</th>
                         </tr>
                     </thead>
@@ -92,7 +92,7 @@ export default function TopCoursesTable({ data }: Props) {
                                             <div
                                                 className="h-full rounded-full transition-all duration-500"
                                                 style={{
-                                                    width: `${(course.indice / 40) * 100}%`,
+                                                    width: `${Math.min(100, Math.max(0, course.indice))}%`,
                                                     background: getScoreColor(course.indice),
                                                 }}
                                             />

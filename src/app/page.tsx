@@ -33,15 +33,15 @@ export default function Home() {
       <main
         className="flex-1 transition-all duration-300 ease-out"
         style={{
-          marginLeft: sidebarCollapsed ? '80px' : '300px', // Updated open width to 300px for more room
-          padding: '40px 60px',
+          marginLeft: sidebarCollapsed ? '72px' : '260px', // Updated open width to 260px for a more compact look
+          padding: '24px 40px',
         }}
       >
         {/* Status bar */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex items-center justify-between mb-6 pb-4 border-b"
+          className="flex items-center justify-between mb-4 pb-3 border-b"
           style={{ borderColor: 'var(--border-primary)' }}
         >
           <div className="flex items-center gap-3">

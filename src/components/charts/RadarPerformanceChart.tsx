@@ -36,15 +36,15 @@ export default function RadarPerformanceChart({ data }: Props) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="glow-card p-8"
+            className="glow-card p-5"
         >
             <h3 className="text-sm font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
                 Desempeño por Dimensión
             </h3>
-            <p className="text-sm mb-6 font-medium" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-xs mb-4 font-medium" style={{ color: 'var(--text-secondary)' }}>
                 Evaluación integral en las 4 dimensiones clave
             </p>
-            <div className="w-full h-[300px]">
+            <div className="w-full h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
                         <PolarGrid stroke="var(--border-primary)" />

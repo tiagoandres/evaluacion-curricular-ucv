@@ -30,17 +30,17 @@ interface SidebarProps {
 
 export default function Sidebar({ activeModule, onModuleChange, collapsed, onCollapse }: SidebarProps) {
     const navItems: NavItem[] = [
-        { id: 'resumen', label: 'Resumen General', icon: <LayoutDashboard size={22} />, active: activeModule === 'resumen' },
-        { id: 'asignaturas', label: 'Asignaturas', icon: <BookOpen size={22} />, active: false, disabled: true },
-        { id: 'docentes', label: 'Docentes', icon: <Users size={22} />, active: false, disabled: true },
-        { id: 'dimensiones', label: 'Dimensiones', icon: <BarChart3 size={22} />, active: false, disabled: true },
-        { id: 'reportes', label: 'Reportes', icon: <FileText size={22} />, active: false, disabled: true },
+        { id: 'resumen', label: 'Resumen General', icon: <LayoutDashboard size={18} />, active: activeModule === 'resumen' },
+        { id: 'asignaturas', label: 'Asignaturas', icon: <BookOpen size={18} />, active: false, disabled: true },
+        { id: 'docentes', label: 'Docentes', icon: <Users size={18} />, active: false, disabled: true },
+        { id: 'dimensiones', label: 'Dimensiones', icon: <BarChart3 size={18} />, active: false, disabled: true },
+        { id: 'reportes', label: 'Reportes', icon: <FileText size={18} />, active: false, disabled: true },
     ];
 
     return (
         <motion.aside
             initial={false}
-            animate={{ width: collapsed ? 80 : 300 }}
+            animate={{ width: collapsed ? 72 : 260 }}
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             className="fixed left-0 top-0 h-screen z-50 flex flex-col border-r bg-white dark:bg-transparent"
             style={{
@@ -50,8 +50,8 @@ export default function Sidebar({ activeModule, onModuleChange, collapsed, onCol
         >
             {/* Header / Logo */}
             <div
-                className={`flex items-center transition-all duration-300 border-b ${collapsed ? 'p-4 pt-8 justify-center' : 'p-6 pt-10 gap-2'}`}
-                style={{ borderColor: 'var(--border-primary)', minHeight: '120px' }}
+                className={`flex items-center transition-all duration-300 border-b ${collapsed ? 'p-4 pt-6 justify-center' : 'p-5 pt-8 gap-2'}`}
+                style={{ borderColor: 'var(--border-primary)', minHeight: '100px' }}
             >
                 {collapsed ? (
                     <motion.div
@@ -59,7 +59,7 @@ export default function Sidebar({ activeModule, onModuleChange, collapsed, onCol
                         animate={{ opacity: 1 }}
                         className="flex flex-col items-center justify-center shrink-0"
                     >
-                        <span className="text-5xl font-serif" style={{ color: 'var(--text-primary)' }}>Ψ</span>
+                        <span className="text-4xl font-serif" style={{ color: 'var(--text-primary)' }}>Ψ</span>
                     </motion.div>
                 ) : (
                     <motion.div
@@ -68,23 +68,23 @@ export default function Sidebar({ activeModule, onModuleChange, collapsed, onCol
                         className="flex items-center gap-2 overflow-hidden w-full whitespace-nowrap pl-2"
                         style={{ color: 'var(--text-primary)' }}
                     >
-                        <span className="text-6xl font-serif leading-none h-[64px] flex items-center justify-center -mt-2">Ψ</span>
+                        <span className="text-5xl font-serif leading-none h-[54px] flex items-center justify-center -mt-2">Ψ</span>
                         <div className="flex flex-col justify-center translate-y-[-4px]">
-                            <span className="text-[17px] italic font-medium leading-tight opacity-80">Escuela de Psicología</span>
-                            <span className="text-[34px] font-medium tracking-tight leading-[1.1]">UCV</span>
+                            <span className="text-[14px] italic font-medium leading-tight opacity-80">Escuela de Psicología</span>
+                            <span className="text-[26px] font-medium tracking-tight leading-[1.1]">UCV</span>
                         </div>
                     </motion.div>
                 )}
             </div>
 
             {/* Navigation */}
-            <nav className={`flex-1 overflow-y-auto space-y-2 transition-all duration-300 ${collapsed ? 'py-6 px-3' : 'py-8 px-6'}`}>
+            <nav className={`flex-1 overflow-y-auto space-y-2 transition-all duration-300 ${collapsed ? 'py-5 px-3' : 'py-6 px-5'}`}>
                 {navItems.map((item) => (
                     <button
                         key={item.id}
                         onClick={() => !item.disabled && onModuleChange(item.id)}
                         disabled={item.disabled}
-                        className={`w-full flex items-center rounded-xl transition-all duration-200 text-sm font-medium ${collapsed ? 'justify-center py-3.5 px-0' : 'gap-4 px-4 py-3.5'
+                        className={`w-full flex items-center rounded-xl transition-all duration-200 text-sm font-medium ${collapsed ? 'justify-center py-2.5 px-0' : 'gap-3 px-4 py-2.5'
                             } ${item.disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                         style={{
                             background: item.active
