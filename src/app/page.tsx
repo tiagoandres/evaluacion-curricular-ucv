@@ -4,13 +4,45 @@ import React, { useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import ResumenGeneral from '@/components/ResumenGeneral';
 import { motion } from 'framer-motion';
+import { supabase } from '@/lib/supabase';
 
 export default function Home() {
   const [activeModule, setActiveModule] = useState('resumen');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<string | null>(null);
 
-  React.useEffect(() => setMounted(true), []);
+  React.useEffect(() => {
+    setMounted(true);
+
+    async function fetchLastUpdate() {
+      const { data, error } = await supabase
+        .from('datos_limpios')
+        .select('marca_temporal')
+        .order('marca_temporal', { ascending: false })
+        .limit(1);
+
+      if (!error && data && data.length > 0) {
+        // Format date string (e.g. from "2026-08-03T14:47:28" to local format)
+        try {
+          const dateStr = data[0].marca_temporal;
+          if (dateStr) {
+            const dateObj = new Date(dateStr);
+            setLastUpdate(dateObj.toLocaleDateString('es-VE', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }));
+          }
+        } catch (e) {
+          console.error("Error formatting date", e);
+        }
+      }
+    }
+    fetchLastUpdate();
+  }, []);
 
   if (!mounted) {
     return (
@@ -51,7 +83,7 @@ export default function Home() {
                 style={{ background: '#10b981' }}
               />
               <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                Datos Mock — Actualización pendiente
+                {lastUpdate ? `Último registro hecho el ${lastUpdate}` : 'Cargando última actualización...'}
               </span>
             </div>
           </div>
