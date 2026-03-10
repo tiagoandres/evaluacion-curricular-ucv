@@ -154,3 +154,41 @@ export function getUniqueMenciones(data: SurveyEntry[]): string[] {
     const menciones = new Set(data.map(d => d.mencion).filter(m => m));
     return Array.from(menciones) as string[];
 }
+
+export function getUniqueAsignaturas(data: SurveyEntry[]): string[] {
+    const asignaturas = new Set(data.map(d => d.asignatura).filter(a => a));
+    return Array.from(asignaturas).sort() as string[];
+}
+
+export interface DocenteStats {
+    docente: string;
+    asignaturas: string;
+    evaluaciones: number;
+    promedioGestion: number;
+    promedioContenidos: number;
+    promedioEvaluacion: number;
+    promedioDesempeno: number;
+    promedioCalidad: number;
+}
+
+export function getVistaDetalladaData(data: SurveyEntry[]): DocenteStats[] {
+    const map: Record<string, SurveyEntry[]> = {};
+    data.forEach(d => {
+        if (!map[d.docente]) map[d.docente] = [];
+        map[d.docente].push(d);
+    });
+
+    return Object.entries(map).map(([docente, entries]) => {
+        const asignaturas = [...new Set(entries.map(e => e.asignatura))].sort().join(', ');
+        return {
+            docente,
+            asignaturas,
+            evaluaciones: entries.length,
+            promedioGestion: getGestionScore(entries),
+            promedioContenidos: getContenidosScore(entries),
+            promedioEvaluacion: getEvaluacionScore(entries),
+            promedioDesempeno: getDesempenoDocenteScore(entries),
+            promedioCalidad: getCalidadCurricular(entries)
+        };
+    });
+}
