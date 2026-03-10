@@ -5,14 +5,15 @@ import { motion } from 'framer-motion';
 import { Filter, Search, ChevronUp, ChevronDown, ChevronsUpDown, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { mapSupabaseRowToSurveyEntry, SurveyEntry } from '@/data/mockData';
-import { getVistaDetalladaData, getUniqueMenciones, getUniqueAsignaturas, DocenteStats } from '@/data/dataUtils';
+import { getVistaDetalladaData, getUniqueDepartamentos, getUniqueCatedras, getUniqueAsignaturas, DocenteStats } from '@/data/dataUtils';
 
 export default function VistaDetallada() {
     const [surveyData, setSurveyData] = useState<SurveyEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [selectedCiclo, setSelectedCiclo] = useState<string | 'all'>('all');
-    const [selectedMencion, setSelectedMencion] = useState<string | 'all'>('all');
+    const [selectedDepartamento, setSelectedDepartamento] = useState<string | 'all'>('all');
+    const [selectedCatedra, setSelectedCatedra] = useState<string | 'all'>('all');
     const [selectedAsignatura, setSelectedAsignatura] = useState<string | 'all'>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [rowLimit, setRowLimit] = useState<number | 'all'>(15);
@@ -38,22 +39,55 @@ export default function VistaDetallada() {
         fetchInfo();
     }, []);
 
-    const menciones = useMemo(() => getUniqueMenciones(surveyData), [surveyData]);
-    const asignaturas = useMemo(() => getUniqueAsignaturas(surveyData), [surveyData]);
+    const departamentos = useMemo(() => {
+        let optionsData = [...surveyData];
+        if (selectedCiclo !== 'all') {
+            optionsData = optionsData.filter(d => d.ciclo && d.ciclo.trim() === selectedCiclo.trim());
+        }
+        return getUniqueDepartamentos(optionsData);
+    }, [surveyData, selectedCiclo]);
+
+    const catedras = useMemo(() => {
+        let optionsData = [...surveyData];
+        if (selectedCiclo !== 'all') {
+            optionsData = optionsData.filter(d => d.ciclo && d.ciclo.trim() === selectedCiclo.trim());
+        }
+        if (selectedDepartamento !== 'all') {
+            optionsData = optionsData.filter(d => d.departamento && d.departamento.trim() === selectedDepartamento.trim());
+        }
+        return getUniqueCatedras(optionsData);
+    }, [surveyData, selectedCiclo, selectedDepartamento]);
+
+    const asignaturas = useMemo(() => {
+        let optionsData = [...surveyData];
+        if (selectedCiclo !== 'all') {
+            optionsData = optionsData.filter(d => d.ciclo && d.ciclo.trim() === selectedCiclo.trim());
+        }
+        if (selectedDepartamento !== 'all') {
+            optionsData = optionsData.filter(d => d.departamento && d.departamento.trim() === selectedDepartamento.trim());
+        }
+        if (selectedCatedra !== 'all') {
+            optionsData = optionsData.filter(d => d.catedra && d.catedra.trim() === selectedCatedra.trim());
+        }
+        return getUniqueAsignaturas(optionsData);
+    }, [surveyData, selectedCiclo, selectedDepartamento, selectedCatedra]);
 
     const filteredEntries = useMemo(() => {
         let filtered = [...surveyData];
         if (selectedCiclo !== 'all') {
             filtered = filtered.filter(d => d.ciclo && d.ciclo.trim() === selectedCiclo.trim());
         }
-        if (selectedMencion !== 'all') {
-            filtered = filtered.filter(d => d.mencion && d.mencion.trim() === selectedMencion.trim());
+        if (selectedDepartamento !== 'all') {
+            filtered = filtered.filter(d => d.departamento && d.departamento.trim() === selectedDepartamento.trim());
+        }
+        if (selectedCatedra !== 'all') {
+            filtered = filtered.filter(d => d.catedra && d.catedra.trim() === selectedCatedra.trim());
         }
         if (selectedAsignatura !== 'all') {
             filtered = filtered.filter(d => d.asignatura && d.asignatura.trim() === selectedAsignatura.trim());
         }
         return filtered;
-    }, [surveyData, selectedCiclo, selectedMencion, selectedAsignatura]);
+    }, [surveyData, selectedCiclo, selectedDepartamento, selectedCatedra, selectedAsignatura]);
 
     const tableData = useMemo(() => {
         let data = getVistaDetalladaData(filteredEntries);
@@ -99,16 +133,18 @@ export default function VistaDetallada() {
 
     const handleCicloChange = (value: string) => {
         setSelectedCiclo(value);
-        if (value !== 'Mención') {
-            setSelectedMencion('all');
+        if (value !== 'all' && value !== 'Mención' && value !== 'Ciclo Básico' && value !== 'Teorías Psicológicas') {
+            setSelectedDepartamento('all');
+            setSelectedCatedra('all');
         }
     };
 
-    const handleMencionChange = (value: string) => {
-        setSelectedMencion(value);
-        if (value !== 'all') {
-            setSelectedCiclo('Mención');
-        }
+    const handleDepartamentoChange = (value: string) => {
+        setSelectedDepartamento(value);
+    };
+
+    const handleCatedraChange = (value: string) => {
+        setSelectedCatedra(value);
     };
 
     const renderSortIcon = (columnName: keyof DocenteStats) => {
@@ -120,12 +156,13 @@ export default function VistaDetallada() {
 
     const handleClearFilters = () => {
         setSelectedCiclo('all');
-        setSelectedMencion('all');
+        setSelectedDepartamento('all');
+        setSelectedCatedra('all');
         setSelectedAsignatura('all');
         setSearchQuery('');
     };
 
-    const hasActiveFilters = selectedCiclo !== 'all' || selectedMencion !== 'all' || selectedAsignatura !== 'all' || searchQuery !== '';
+    const hasActiveFilters = selectedCiclo !== 'all' || selectedDepartamento !== 'all' || selectedCatedra !== 'all' || selectedAsignatura !== 'all' || searchQuery !== '';
 
     const headers: { label: React.ReactNode; key: keyof DocenteStats }[] = [
         { label: 'Docente', key: 'docente' },
@@ -138,10 +175,18 @@ export default function VistaDetallada() {
 
     function getScoreColor(score: number, max: number): string {
         const percentage = score / max;
-        if (percentage >= 0.9) return '#10b981';
-        if (percentage >= 0.75) return '#22d3ee';
-        if (percentage >= 0.6) return '#f59e0b';
-        return '#ef4444';
+        if (percentage >= 0.7) return '#10b981'; // Verde (Por encima de 70 / 7)
+        if (percentage >= 0.5) return '#eab308'; // Amarillo (Entre 50 y 70 / 5 y 7)
+        if (percentage >= 0.3) return '#f97316'; // Naranja (Entre 30 y 50 / 3 y 5)
+        return '#ef4444'; // Rojo (Entre 0 y 30 / 0 y 3)
+    }
+
+    function getNPSColor(score: number): string {
+        if (score >= 9) return '#10b981'; // Verde (Promotores: 9-10)
+        if (score >= 7) return '#eab308'; // Amarillo (Pasivos: 7-8)
+        if (score >= 5) return '#f97316'; // Naranja (Detractores leves)
+        if (score >= 3) return '#ea580c'; // Naranja oscuro 
+        return '#ef4444'; // Rojo (Detractores severos)
     }
 
     return (
@@ -196,18 +241,36 @@ export default function VistaDetallada() {
 
                     <div className="relative w-full sm:w-auto">
                         <select
-                            value={selectedMencion}
-                            onChange={(e) => handleMencionChange(e.target.value)}
-                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full sm:w-auto"
+                            value={selectedDepartamento}
+                            onChange={(e) => handleDepartamentoChange(e.target.value)}
+                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate sm:w-auto"
                             style={{
                                 background: 'var(--bg-card)',
                                 color: 'var(--text-primary)',
                                 border: '1px solid var(--border-primary)',
                             }}
                         >
-                            <option value="all">Todas las Menciones</option>
-                            {menciones.map(m => (
+                            <option value="all">Todos los Departamentos</option>
+                            {departamentos.map(m => (
                                 <option key={m} value={m}>{m}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="relative w-full sm:w-auto">
+                        <select
+                            value={selectedCatedra}
+                            onChange={(e) => handleCatedraChange(e.target.value)}
+                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate sm:w-auto"
+                            style={{
+                                background: 'var(--bg-card)',
+                                color: 'var(--text-primary)',
+                                border: '1px solid var(--border-primary)',
+                            }}
+                        >
+                            <option value="all">Todas las Cátedras</option>
+                            {catedras.map(c => (
+                                <option key={c} value={c}>{c}</option>
                             ))}
                         </select>
                     </div>
@@ -278,8 +341,8 @@ export default function VistaDetallada() {
                     className="glow-card p-0 sm:p-5 overflow-hidden w-full flex flex-col"
                 >
                     <div className="px-4 pt-4 sm:px-0 sm:pt-0 sm:pb-3 flex items-center">
-                        <span className="text-xs font-medium px-3 py-1.5 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 rounded-lg border border-indigo-100 dark:border-indigo-800/50 flex flex-wrap gap-2 animate-pulse transition-opacity">
-                            <span className="font-bold">💡 Tip:</span> Ubique un mouse o tap encima del nombre de un docente para ver las asignaturas que dicta.
+                        <span className="text-xs font-semibold px-3 py-1.5 bg-indigo-100 theme-tip-text dark:bg-indigo-900/40 rounded-lg border border-indigo-300 dark:border-indigo-700/50 flex flex-wrap gap-2 items-center shadow-sm">
+                            <span className="font-bold flex items-center gap-1"><span className="text-sm">💡</span> Tip:</span> Ubique un mouse o tap encima del nombre de un docente para ver las asignaturas que dicta.
                         </span>
                     </div>
 
@@ -332,7 +395,7 @@ export default function VistaDetallada() {
                                         <td className="text-center font-medium" style={{ color: getScoreColor(row.promedioDesempeno, 100) }}>
                                             {row.promedioDesempeno.toFixed(1)}
                                         </td>
-                                        <td className="text-center font-medium" style={{ color: getScoreColor(row.promedioNPS, 100) }}>
+                                        <td className="text-center font-medium" style={{ color: getNPSColor(row.promedioNPS) }}>
                                             {row.promedioNPS.toFixed(1)}
                                         </td>
                                     </motion.tr>

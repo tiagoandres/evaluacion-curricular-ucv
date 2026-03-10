@@ -20,10 +20,10 @@ interface Props {
 
 function getScoreColor(score: number, max: number): string {
     const percentage = score / max;
-    if (percentage >= 0.9) return '#10b981';
-    if (percentage >= 0.75) return '#22d3ee';
-    if (percentage >= 0.6) return '#f59e0b';
-    return '#ef4444';
+    if (percentage >= 0.7) return '#10b981'; // Verde (Por encima de 70 / 7)
+    if (percentage >= 0.5) return '#eab308'; // Amarillo (Entre 50 y 70 / 5 y 7)
+    if (percentage >= 0.3) return '#f97316'; // Naranja (Entre 30 y 50 / 3 y 5)
+    return '#ef4444'; // Rojo (Entre 0 y 30 / 0 y 3)
 }
 
 export default function TopCoursesTable({ data }: Props) {

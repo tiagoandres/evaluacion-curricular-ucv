@@ -266,3 +266,12 @@ select {
 .dark .theme-logo-text {
   color: #ffffff !important;
 }
+
+/* Custom Tip Notice Colors */
+.theme-tip-text {
+  color: #000000 !important;
+}
+
+.dark .theme-tip-text {
+  color: #c7d2fe !important;
+}

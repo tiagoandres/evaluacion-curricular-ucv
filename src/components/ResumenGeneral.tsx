@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ClipboardList, Star, UserCheck, Filter, ChevronDown } from 'lucide-react';
+import { ClipboardList, Star, UserCheck, Filter, ChevronDown, X } from 'lucide-react';
 import { mapSupabaseRowToSurveyEntry, SurveyEntry } from '@/data/mockData';
 import { supabase } from '@/lib/supabase';
 import {
@@ -14,7 +14,8 @@ import {
     getSatisfactionByCycle,
     getSatisfactionByAsignatura,
     getTopCourses,
-    getUniqueMenciones,
+    getUniqueDepartamentos,
+    getUniqueCatedras,
 } from '@/data/dataUtils';
 
 
@@ -25,7 +26,8 @@ import TopCoursesTable from './TopCoursesTable';
 
 export default function ResumenGeneral() {
     const [selectedCiclo, setSelectedCiclo] = useState<string | 'all'>('all');
-    const [selectedMencion, setSelectedMencion] = useState<string | 'all'>('all');
+    const [selectedDepartamento, setSelectedDepartamento] = useState<string | 'all'>('all');
+    const [selectedCatedra, setSelectedCatedra] = useState<string | 'all'>('all');
 
     // DB state
     const [surveyData, setSurveyData] = useState<SurveyEntry[]>([]);
@@ -45,19 +47,39 @@ export default function ResumenGeneral() {
         fetchInfo();
     }, []);
 
-    const menciones = getUniqueMenciones(surveyData);
+    const departamentos = useMemo(() => {
+        let optionsData = [...surveyData];
+        if (selectedCiclo && selectedCiclo !== 'all') {
+            optionsData = optionsData.filter(d => d.ciclo && d.ciclo.trim() === selectedCiclo.trim());
+        }
+        return getUniqueDepartamentos(optionsData);
+    }, [surveyData, selectedCiclo]);
 
-    // Filtered data based on cycle and mention selections
+    const catedras = useMemo(() => {
+        let optionsData = [...surveyData];
+        if (selectedCiclo && selectedCiclo !== 'all') {
+            optionsData = optionsData.filter(d => d.ciclo && d.ciclo.trim() === selectedCiclo.trim());
+        }
+        if (selectedDepartamento && selectedDepartamento !== 'all') {
+            optionsData = optionsData.filter(d => d.departamento && d.departamento.trim() === selectedDepartamento.trim());
+        }
+        return getUniqueCatedras(optionsData);
+    }, [surveyData, selectedCiclo, selectedDepartamento]);
+
+    // Filtered data based on cycle, departamento and catedra
     const filteredData = useMemo(() => {
         let data = [...surveyData];
         if (selectedCiclo && selectedCiclo !== 'all') {
             data = data.filter(d => d.ciclo && d.ciclo.trim() === selectedCiclo.trim());
         }
-        if (selectedMencion && selectedMencion !== 'all') {
-            data = data.filter(d => d.mencion && d.mencion.trim() === selectedMencion.trim());
+        if (selectedDepartamento && selectedDepartamento !== 'all') {
+            data = data.filter(d => d.departamento && d.departamento.trim() === selectedDepartamento.trim());
+        }
+        if (selectedCatedra && selectedCatedra !== 'all') {
+            data = data.filter(d => d.catedra && d.catedra.trim() === selectedCatedra.trim());
         }
         return data;
-    }, [selectedCiclo, selectedMencion, surveyData]);
+    }, [selectedCiclo, selectedDepartamento, selectedCatedra, surveyData]);
 
     // KPI values (affected by both filters)
     const totalEvaluaciones = getTotalEvaluaciones(filteredData);
@@ -67,30 +89,40 @@ export default function ResumenGeneral() {
     // Radar data (affected by filters)
     const radarData = getRadarData(filteredData);
 
-    // Satisfaction bar chart (shows by cycle when no mention filter, by asignatura when mention selected)
-    const isByAsignatura = selectedMencion !== 'all';
+    // Satisfaction bar chart
+    const isByAsignatura = selectedDepartamento !== 'all' || selectedCatedra !== 'all';
     const satisfactionData = useMemo(() => {
         if (isByAsignatura) {
-            return getSatisfactionByAsignatura(filteredData, selectedMencion as string);
+            return getSatisfactionByAsignatura(filteredData);
         }
         return getSatisfactionByCycle(filteredData);
-    }, [selectedMencion, isByAsignatura, filteredData]);
+    }, [isByAsignatura, filteredData]);
 
     // Top courses (affected by filters)
     const topCourses = getTopCourses(filteredData);
 
     const handleCicloChange = (value: string) => {
         setSelectedCiclo(value);
-        if (value !== 'Mención') {
-            setSelectedMencion('all');
+        if (value !== 'all' && value !== 'Mención' && value !== 'Ciclo Básico' && value !== 'Teorías Psicológicas') {
+            setSelectedDepartamento('all');
+            setSelectedCatedra('all');
         }
     };
 
-    const handleMencionChange = (value: string) => {
-        setSelectedMencion(value);
-        if (value !== 'all') {
-            setSelectedCiclo('Mención');
-        }
+    const handleDepartamentoChange = (value: string) => {
+        setSelectedDepartamento(value);
+    };
+
+    const handleCatedraChange = (value: string) => {
+        setSelectedCatedra(value);
+    };
+
+    const hasActiveFilters = selectedCiclo !== 'all' || selectedDepartamento !== 'all' || selectedCatedra !== 'all';
+
+    const handleClearFilters = () => {
+        setSelectedCiclo('all');
+        setSelectedDepartamento('all');
+        setSelectedCatedra('all');
     };
 
     return (
@@ -136,21 +168,53 @@ export default function ResumenGeneral() {
                     </div>
                     <div className="relative">
                         <select
-                            value={selectedMencion}
-                            onChange={(e) => handleMencionChange(e.target.value)}
-                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm"
+                            value={selectedDepartamento}
+                            onChange={(e) => handleDepartamentoChange(e.target.value)}
+                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm max-w-[200px] truncate"
                             style={{
                                 background: 'var(--bg-card)',
                                 color: 'var(--text-primary)',
                                 border: '1px solid var(--border-primary)',
                             }}
                         >
-                            <option value="all">Todas las Menciones</option>
-                            {menciones.map(m => (
+                            <option value="all">Todos los Departamentos</option>
+                            {departamentos.map(m => (
                                 <option key={m} value={m}>{m}</option>
                             ))}
                         </select>
                     </div>
+                    <div className="relative">
+                        <select
+                            value={selectedCatedra}
+                            onChange={(e) => handleCatedraChange(e.target.value)}
+                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm max-w-[200px] truncate"
+                            style={{
+                                background: 'var(--bg-card)',
+                                color: 'var(--text-primary)',
+                                border: '1px solid var(--border-primary)',
+                            }}
+                        >
+                            <option value="all">Todas las Cátedras</option>
+                            {catedras.map(c => (
+                                <option key={c} value={c}>{c}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {hasActiveFilters && (
+                        <button
+                            onClick={handleClearFilters}
+                            className="flex items-center justify-center gap-2 text-sm font-medium rounded-xl px-4 py-3 cursor-pointer transition-all shadow-sm hover:opacity-80 dark:hover:bg-gray-800"
+                            style={{
+                                background: 'var(--bg-card)',
+                                color: 'var(--text-primary)',
+                                border: '1px solid var(--border-primary)',
+                            }}
+                        >
+                            <X size={16} />
+                            <span>Borrar Filtros</span>
+                        </button>
+                    )}
                 </div>
             </motion.div>
 

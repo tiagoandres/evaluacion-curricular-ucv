@@ -1,7 +1,8 @@
 export interface SurveyEntry {
   id: string | number;
   ciclo: string;
-  mencion?: string | null;
+  departamento?: string | null;
+  catedra?: string | null;
   edad: number;
   genero: string;
   asignatura: string;
@@ -19,7 +20,8 @@ export function mapSupabaseRowToSurveyEntry(row: any): SurveyEntry {
   return {
     id: row.marca_temporal || Math.random().toString(),
     ciclo: row.ciclo_evaluado || 'Desconocido',
-    mencion: row.mencion_evaluada,
+    departamento: row.departamento_evaluado,
+    catedra: row.catedra_evaluada,
     edad: row.edad || 0,
     genero: row.genero || 'Otro',
     asignatura: row.asignatura_evaluada || 'Desconocida',

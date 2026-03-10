@@ -4,14 +4,18 @@ import { SurveyEntry } from './mockData';
 export function filterData(
     data: SurveyEntry[],
     ciclo?: string | 'all',
-    mencion?: string | 'all'
+    departamento?: string | 'all',
+    catedra?: string | 'all'
 ): SurveyEntry[] {
     let filtered = [...data];
     if (ciclo && ciclo !== 'all') {
         filtered = filtered.filter(d => d.ciclo === ciclo);
     }
-    if (mencion && mencion !== 'all') {
-        filtered = filtered.filter(d => d.mencion === mencion);
+    if (departamento && departamento !== 'all') {
+        filtered = filtered.filter(d => d.departamento === departamento);
+    }
+    if (catedra && catedra !== 'all') {
+        filtered = filtered.filter(d => d.catedra === catedra);
     }
     return filtered;
 }
@@ -109,12 +113,11 @@ export function getSatisfactionByCycle(allData: SurveyEntry[]) {
     });
 }
 
-// Satisfaction by asignatura for a specific mention
-export function getSatisfactionByAsignatura(data: SurveyEntry[], mencion: string) {
-    const filteredForMention = data.filter(d => d.mencion === mencion);
-    const courses = [...new Set(filteredForMention.map(d => d.asignatura))];
+// Satisfaction by asignatura
+export function getSatisfactionByAsignatura(data: SurveyEntry[]) {
+    const courses = [...new Set(data.map(d => d.asignatura))];
     return courses.map(asignatura => {
-        const filtered = filteredForMention.filter(d => d.asignatura === asignatura);
+        const filtered = data.filter(d => d.asignatura === asignatura);
         return {
             asignatura: asignatura,
             indice: filtered.length > 0 ? getCalidadCurricular(filtered) : 0,
@@ -153,15 +156,19 @@ export function getTopCourses(data: SurveyEntry[], limit: number = 5) {
         .slice(0, limit);
 }
 
-// Get all unique mentions from data
-export function getUniqueMenciones(data: SurveyEntry[]): string[] {
-    const menciones = new Set(data.map(d => d.mencion).filter(m => m));
-    return Array.from(menciones) as string[];
+export function getUniqueDepartamentos(data: SurveyEntry[]): string[] {
+    const departamentos = new Set(data.map(d => d.departamento).filter(m => m));
+    return (Array.from(departamentos) as string[]).sort((a, b) => a.localeCompare(b, 'es'));
+}
+
+export function getUniqueCatedras(data: SurveyEntry[]): string[] {
+    const catedras = new Set(data.map(d => d.catedra).filter(c => c));
+    return (Array.from(catedras) as string[]).sort((a, b) => a.localeCompare(b, 'es'));
 }
 
 export function getUniqueAsignaturas(data: SurveyEntry[]): string[] {
     const asignaturas = new Set(data.map(d => d.asignatura).filter(a => a));
-    return Array.from(asignaturas).sort() as string[];
+    return (Array.from(asignaturas) as string[]).sort((a, b) => a.localeCompare(b, 'es'));
 }
 
 export interface DocenteStats {

@@ -28,7 +28,18 @@ export default function Home() {
         try {
           const dateStr = data[0].marca_temporal;
           if (dateStr) {
-            const dateObj = new Date(dateStr);
+            let dateObj = new Date(dateStr);
+
+            // Convertir explícitamente de YYYY-DD-MM a YYYY-MM-DD para evitar el parsing invertido de Javascript
+            const match = dateStr.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})(.*)?$/);
+            if (match) {
+              const [, year, day, month, rest] = match;
+              let timeStr = (rest || '').trim();
+              if (timeStr && !timeStr.startsWith('T')) timeStr = `T${timeStr}`;
+
+              dateObj = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}${timeStr}`);
+            }
+
             setLastUpdate(dateObj.toLocaleDateString('es-VE', {
               year: 'numeric',
               month: 'long',

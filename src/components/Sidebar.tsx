@@ -169,7 +169,7 @@ export default function Sidebar({ activeModule, onModuleChange, collapsed, onCol
                                 transition={{ duration: 0.2 }}
                                 className="font-medium whitespace-nowrap"
                             >
-                                Colapsar
+                                Ocultar
                             </motion.span>
                         )}
                     </AnimatePresence>
