@@ -7,13 +7,39 @@ export interface SurveyEntry {
   genero: string;
   asignatura: string;
   docente: string;
-  gestionScore: number; // 0-10
-  contenidosScore: number; // 0-10
-  evaluacionScore: number; // 0-10
-  desempenoScore: number; // 0-10
+  gestionScore: number; // 0-100
+  contenidosScore: number; // 0-100
+  evaluacionScore: number; // 0-100
+  desempenoScore: number; // 0-100
   calidad_unidad_curricular: number; // 0-100
   utilidad_asignatura: number; // 1-10
   nps_docente: number; // 1-10
+  // Nuevos campos Asignaturas
+  gestion1: string;
+  gestion2: string;
+  gestion3: string;
+  contenido_recursos13: string;
+  contenido_recursos14: string;
+  contenido_recursos15: string;
+  evaluacion1: string;
+  evaluacion2: string;
+  evaluacion3: string;
+  evaluacion4: string;
+  evaluacion5: string;
+  evaluacion6: string;
+  // Contenidos 1-12
+  contenido_recursos1: string;
+  contenido_recursos2: string;
+  contenido_recursos3: string;
+  contenido_recursos4: string;
+  contenido_recursos5: string;
+  contenido_recursos6: string;
+  contenido_recursos7: string;
+  contenido_recursos8: string;
+  contenido_recursos9: string;
+  contenido_recursos10: string;
+  contenido_recursos11: string;
+  contenido_recursos12: string;
 }
 
 export function mapSupabaseRowToSurveyEntry(row: any): SurveyEntry {
@@ -33,6 +59,31 @@ export function mapSupabaseRowToSurveyEntry(row: any): SurveyEntry {
     calidad_unidad_curricular: row.indice_calidad_curricular_transformado || 0,
     utilidad_asignatura: row.utilidad || 0,
     nps_docente: row.nps || 0,
+    // Nuevos campos Asignaturas
+    gestion1: row.gestion1 || '',
+    gestion2: row.gestion2 || '',
+    gestion3: row.gestion3 || '',
+    contenido_recursos13: row.contenido_recursos13 || '',
+    contenido_recursos14: row.contenido_recursos14 || '',
+    contenido_recursos15: row.contenido_recursos15 || '',
+    evaluacion1: row.evaluacion1 || row.evaluacion_1 || row.Evaluacion1 || row.evaluación1 || row.evaluación_1 || '',
+    evaluacion2: row.evaluacion2 || row.evaluacion_2 || row.Evaluacion2 || row.evaluación2 || row.evaluación_2 || '',
+    evaluacion3: row.evaluacion3 || row.evaluacion_3 || row.Evaluacion3 || row.evaluación3 || row.evaluación_3 || '',
+    evaluacion4: row.evaluacion4 || row.evaluacion_4 || row.Evaluacion4 || row.evaluación4 || row.evaluación_4 || '',
+    evaluacion5: row.evaluacion5 || row.evaluacion_5 || row.Evaluacion5 || row.evaluación5 || row.evaluación_5 || '',
+    evaluacion6: row.evaluacion6 || row.evaluacion_6 || row.Evaluacion6 || row.evaluación6 || row.evaluación_6 || '',
+    contenido_recursos1: row.contenido_recursos1 || '',
+    contenido_recursos2: row.contenido_recursos2 || '',
+    contenido_recursos3: row.contenido_recursos3 || '',
+    contenido_recursos4: row.contenido_recursos4 || '',
+    contenido_recursos5: row.contenido_recursos5 || '',
+    contenido_recursos6: row.contenido_recursos6 || '',
+    contenido_recursos7: row.contenido_recursos7 || '',
+    contenido_recursos8: row.contenido_recursos8 || '',
+    contenido_recursos9: row.contenido_recursos9 || '',
+    contenido_recursos10: row.contenido_recursos10 || '',
+    contenido_recursos11: row.contenido_recursos11 || '',
+    contenido_recursos12: row.contenido_recursos12 || '',
   };
 }
 

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { BarChart as BarChartIcon } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
@@ -39,17 +40,22 @@ export default function SatisfactionBarChart({ data, isByAsignatura = false }: P
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
-            className="glow-card p-5 flex flex-col justify-between"
+            className="glow-card p-6 rounded-2xl flex flex-col justify-between"
         >
-            <h3 className="text-sm font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
-                {isByAsignatura ? 'Calidad por Asignatura' : 'Calidad por Ciclo'}
-            </h3>
-            <p className="text-xs mb-4 font-medium" style={{ color: 'var(--text-secondary)' }}>
-                {isByAsignatura
-                    ? 'Comparativa de la calidad de unidad curricular entre asignaturas de la mención'
-                    : 'Comparativa de calidad entre Ciclo Básico, Mención y Teorías Psicológicas'
-                }
-            </p>
+            <div className="flex items-center gap-3 shrink-0 mb-4">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-cyan-500/10 text-cyan-500">
+                    <BarChartIcon size={20} />
+                </div>
+                <div>
+                    <h4 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{isByAsignatura ? 'Calidad por Asignatura' : 'Calidad por Ciclo'}</h4>
+                    <p className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                        {isByAsignatura
+                            ? 'Comparativa de la calidad de unidad curricular entre asignaturas de la mención'
+                            : 'Comparativa de calidad entre Ciclo Básico, Mención y Teorías Psicológicas'
+                        }
+                    </p>
+                </div>
+            </div>
             <div className="w-full h-[300px] mt-2 mb-2">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart

@@ -32,8 +32,8 @@ interface SidebarProps {
 export default function Sidebar({ activeModule, onModuleChange, collapsed, onCollapse }: SidebarProps) {
     const navItems: NavItem[] = [
         { id: 'resumen', label: 'Resumen General', icon: <LayoutDashboard size={18} />, active: activeModule === 'resumen' },
+        { id: 'asignaturas', label: 'Asignaturas', icon: <BookOpen size={18} />, active: activeModule === 'asignaturas' },
         { id: 'vista-detallada', label: 'Vista Detallada', icon: <Table size={18} />, active: activeModule === 'vista-detallada' },
-        { id: 'asignaturas', label: 'Asignaturas', icon: <BookOpen size={18} />, active: false, disabled: true },
         { id: 'docentes', label: 'Docentes', icon: <Users size={18} />, active: false, disabled: true },
         { id: 'dimensiones', label: 'Dimensiones', icon: <BarChart3 size={18} />, active: false, disabled: true },
         { id: 'reportes', label: 'Reportes', icon: <FileText size={18} />, active: false, disabled: true },

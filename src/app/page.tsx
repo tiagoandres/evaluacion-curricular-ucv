@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import ResumenGeneral from '@/components/ResumenGeneral';
 import VistaDetallada from '@/components/VistaDetallada';
+import Asignaturas from '@/components/Asignaturas';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 
@@ -106,6 +107,7 @@ export default function Home() {
         {/* Module content */}
         {activeModule === 'resumen' && <ResumenGeneral />}
         {activeModule === 'vista-detallada' && <VistaDetallada />}
+        {activeModule === 'asignaturas' && <Asignaturas />}
       </main>
     </div>
   );

@@ -174,6 +174,7 @@ export function getUniqueAsignaturas(data: SurveyEntry[]): string[] {
 export interface DocenteStats {
     docente: string;
     asignaturas: string;
+    departamentos: string;
     evaluaciones: number;
     promedioContenidos: number;
     promedioEvaluacion: number;
@@ -190,9 +191,11 @@ export function getVistaDetalladaData(data: SurveyEntry[]): DocenteStats[] {
 
     return Object.entries(map).map(([docente, entries]) => {
         const asignaturas = [...new Set(entries.map(e => e.asignatura))].sort().join(', ');
+        const departamentos = [...new Set(entries.map(e => e.departamento))].sort().join(', ');
         return {
             docente,
             asignaturas,
+            departamentos,
             evaluaciones: entries.length,
             promedioContenidos: getContenidosScore(entries),
             promedioEvaluacion: getEvaluacionScore(entries),

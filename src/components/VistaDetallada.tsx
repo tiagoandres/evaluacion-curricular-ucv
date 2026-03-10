@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Filter, Search, ChevronUp, ChevronDown, ChevronsUpDown, X } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Filter, Search, ChevronUp, ChevronDown, ChevronsUpDown, X, Table } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { mapSupabaseRowToSurveyEntry, SurveyEntry } from '@/data/mockData';
 import { getVistaDetalladaData, getUniqueDepartamentos, getUniqueCatedras, getUniqueAsignaturas, DocenteStats } from '@/data/dataUtils';
@@ -24,6 +24,19 @@ export default function VistaDetallada() {
     } | null>(null);
 
     const [hoveredInfo, setHoveredInfo] = useState<{ docente: string, asignaturas: string, x: number, y: number } | null>(null);
+
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setIsSearchFocused(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     useEffect(() => {
         async function fetchInfo() {
@@ -88,6 +101,17 @@ export default function VistaDetallada() {
         }
         return filtered;
     }, [surveyData, selectedCiclo, selectedDepartamento, selectedCatedra, selectedAsignatura]);
+
+    const searchDropdownResults = useMemo(() => {
+        if (!searchQuery.trim()) return [];
+        const query = searchQuery.toLowerCase();
+        let data = getVistaDetalladaData(filteredEntries);
+        // Only return matches for the dropdown, limited to 10
+        return data.filter(d =>
+            d.docente.toLowerCase().includes(query) ||
+            d.asignaturas.toLowerCase().includes(query)
+        ).slice(0, 10);
+    }, [filteredEntries, searchQuery]);
 
     const tableData = useMemo(() => {
         let data = getVistaDetalladaData(filteredEntries);
@@ -198,13 +222,18 @@ export default function VistaDetallada() {
                 transition={{ duration: 0.4 }}
                 className="flex flex-col md:flex-row md:items-end md:justify-between gap-4"
             >
-                <div>
-                    <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                        Vista Detallada
-                    </h2>
-                    <p className="text-base mt-2 font-medium" style={{ color: 'var(--text-secondary)' }}>
-                        Desglose de datos por docente y métricas
-                    </p>
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-inner" style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(239,68,68,0.2))' }}>
+                        <Table size={20} className="text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                            Vista Detallada
+                        </h2>
+                        <p className="text-base mt-2 font-medium" style={{ color: 'var(--text-secondary)' }}>
+                            Desglose de datos por docente y métricas
+                        </p>
+                    </div>
                 </div>
             </motion.div>
 
@@ -225,12 +254,8 @@ export default function VistaDetallada() {
                         <select
                             value={selectedCiclo}
                             onChange={(e) => handleCicloChange(e.target.value)}
-                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full sm:w-auto"
-                            style={{
-                                background: 'var(--bg-card)',
-                                color: 'var(--text-primary)',
-                                border: '1px solid var(--border-primary)',
-                            }}
+                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full sm:w-auto border border-gray-200 dark:border-gray-800 focus:border-indigo-500"
+                            style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                         >
                             <option value="all">Todos los Ciclos</option>
                             <option value="Ciclo Básico">Ciclo Básico</option>
@@ -239,16 +264,12 @@ export default function VistaDetallada() {
                         </select>
                     </div>
 
-                    <div className="relative w-full sm:w-auto">
+                    <div className="relative w-full sm:w-auto flex-1 min-w-[140px]">
                         <select
                             value={selectedDepartamento}
                             onChange={(e) => handleDepartamentoChange(e.target.value)}
-                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate sm:w-auto"
-                            style={{
-                                background: 'var(--bg-card)',
-                                color: 'var(--text-primary)',
-                                border: '1px solid var(--border-primary)',
-                            }}
+                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate border border-gray-200 dark:border-gray-800 focus:border-indigo-500"
+                            style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                         >
                             <option value="all">Todos los Departamentos</option>
                             {departamentos.map(m => (
@@ -257,16 +278,12 @@ export default function VistaDetallada() {
                         </select>
                     </div>
 
-                    <div className="relative w-full sm:w-auto">
+                    <div className="relative w-full sm:w-auto flex-1 min-w-[140px]">
                         <select
                             value={selectedCatedra}
                             onChange={(e) => handleCatedraChange(e.target.value)}
-                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate sm:w-auto"
-                            style={{
-                                background: 'var(--bg-card)',
-                                color: 'var(--text-primary)',
-                                border: '1px solid var(--border-primary)',
-                            }}
+                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate border border-gray-200 dark:border-gray-800 focus:border-indigo-500"
+                            style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                         >
                             <option value="all">Todas las Cátedras</option>
                             {catedras.map(c => (
@@ -275,16 +292,12 @@ export default function VistaDetallada() {
                         </select>
                     </div>
 
-                    <div className="relative w-full sm:w-auto flex-1 min-w-[200px]">
+                    <div className="relative w-full sm:w-auto flex-1 min-w-[140px]">
                         <select
                             value={selectedAsignatura}
                             onChange={(e) => setSelectedAsignatura(e.target.value)}
-                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate"
-                            style={{
-                                background: 'var(--bg-card)',
-                                color: 'var(--text-primary)',
-                                border: '1px solid var(--border-primary)',
-                            }}
+                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate border border-gray-200 dark:border-gray-800 focus:border-indigo-500"
+                            style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                         >
                             <option value="all">Todas las Asignaturas</option>
                             {asignaturas.map(a => (
@@ -296,12 +309,8 @@ export default function VistaDetallada() {
                     {hasActiveFilters && (
                         <button
                             onClick={handleClearFilters}
-                            className="flex items-center justify-center gap-2 text-sm font-medium rounded-xl px-4 py-3 cursor-pointer transition-all shadow-sm hover:opacity-80 dark:hover:bg-gray-800 w-full sm:w-auto shrink-0"
-                            style={{
-                                background: 'var(--bg-card)',
-                                color: 'var(--text-primary)',
-                                border: '1px solid var(--border-primary)',
-                            }}
+                            className="flex items-center justify-center gap-2 text-sm font-medium rounded-xl px-4 py-3 cursor-pointer transition-all shadow-sm hover:opacity-80 dark:hover:bg-gray-800 w-full sm:w-auto shrink-0 border border-gray-200 dark:border-gray-800"
+                            style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                         >
                             <X size={16} className="text-red-500" />
                             Borrar
@@ -309,22 +318,61 @@ export default function VistaDetallada() {
                     )}
                 </div>
 
-                <div className="w-full lg:w-auto lg:min-w-[300px]">
+                <div className="w-full lg:w-auto lg:min-w-[320px] relative" ref={searchRef}>
                     <div className="relative w-full">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} size={16} />
                         <input
                             type="text"
                             placeholder="Buscar docente o asignatura..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full text-sm font-medium rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 transition-all shadow-sm"
+                            onFocus={() => setIsSearchFocused(true)}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                setIsSearchFocused(true);
+                            }}
+                            className="w-full text-sm font-medium rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:border-indigo-500 transition-all shadow-sm border border-gray-200 dark:border-gray-800"
                             style={{
                                 background: 'var(--bg-card)',
-                                color: 'var(--text-primary)',
-                                border: '1px solid var(--border-primary)',
+                                color: 'var(--text-primary)'
                             }}
                         />
                     </div>
+
+                    {/* Auto-complete dropdown */}
+                    <AnimatePresence>
+                        {isSearchFocused && searchQuery.trim() !== '' && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 5 }}
+                                transition={{ duration: 0.15 }}
+                                className="absolute mt-2 w-full z-50 rounded-xl shadow-xl border overflow-hidden max-h-[300px] overflow-y-auto"
+                                style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
+                            >
+                                {searchDropdownResults.length === 0 ? (
+                                    <div className="p-4 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+                                        No se encontraron coincidencias.
+                                    </div>
+                                ) : (
+                                    <ul className="py-1">
+                                        {searchDropdownResults.map((match, i) => (
+                                            <li
+                                                key={i}
+                                                onClick={() => {
+                                                    setSearchQuery(match.docente);
+                                                    setIsSearchFocused(false);
+                                                }}
+                                                className="px-4 py-2.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 cursor-pointer flex flex-col transition-colors"
+                                            >
+                                                <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{match.docente}</span>
+                                                <span className="text-[11px] uppercase tracking-wider mt-0.5" style={{ color: 'var(--text-muted)' }}>{match.departamentos || 'Varios / Sin Dpto'}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </motion.div>
 
@@ -338,9 +386,9 @@ export default function VistaDetallada() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
-                    className="glow-card p-0 sm:p-5 overflow-hidden w-full flex flex-col"
+                    className="glow-card p-4 sm:p-6 rounded-2xl overflow-hidden w-full flex flex-col"
                 >
-                    <div className="px-4 pt-4 sm:px-0 sm:pt-0 sm:pb-3 flex items-center">
+                    <div className="pb-4 flex items-center">
                         <span className="text-xs font-semibold px-3 py-1.5 bg-indigo-100 theme-tip-text dark:bg-indigo-900/40 rounded-lg border border-indigo-300 dark:border-indigo-700/50 flex flex-wrap gap-2 items-center shadow-sm">
                             <span className="font-bold flex items-center gap-1"><span className="text-sm">💡</span> Tip:</span> Ubique un mouse o tap encima del nombre de un docente para ver las asignaturas que dicta.
                         </span>
@@ -357,7 +405,7 @@ export default function VistaDetallada() {
                                             className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors select-none"
                                         >
                                             <div className="flex items-center gap-1.5 whitespace-normal min-w-max md:min-w-0">
-                                                <div className="flex-1 flex justify-center">
+                                                <div className="flex-1 flex justify-center text-[10px] md:text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] leading-tight">
                                                     {header.label}
                                                 </div>
                                                 <span className="text-gray-400 shrink-0">
@@ -385,17 +433,17 @@ export default function VistaDetallada() {
                                                 {row.docente}
                                             </span>
                                         </td>
-                                        <td className="font-medium text-center">{row.evaluaciones}</td>
-                                        <td className="text-center font-medium" style={{ color: getScoreColor(row.promedioContenidos, 100) }}>
+                                        <td className="font-semibold text-center">{row.evaluaciones}</td>
+                                        <td className="text-center font-extrabold" style={{ color: getScoreColor(row.promedioContenidos, 100) }}>
                                             {row.promedioContenidos.toFixed(1)}
                                         </td>
-                                        <td className="text-center font-medium" style={{ color: getScoreColor(row.promedioEvaluacion, 100) }}>
+                                        <td className="text-center font-extrabold" style={{ color: getScoreColor(row.promedioEvaluacion, 100) }}>
                                             {row.promedioEvaluacion.toFixed(1)}
                                         </td>
-                                        <td className="text-center font-medium" style={{ color: getScoreColor(row.promedioDesempeno, 100) }}>
+                                        <td className="text-center font-extrabold" style={{ color: getScoreColor(row.promedioDesempeno, 100) }}>
                                             {row.promedioDesempeno.toFixed(1)}
                                         </td>
-                                        <td className="text-center font-medium" style={{ color: getNPSColor(row.promedioNPS) }}>
+                                        <td className="text-center font-extrabold" style={{ color: getNPSColor(row.promedioNPS) }}>
                                             {row.promedioNPS.toFixed(1)}
                                         </td>
                                     </motion.tr>

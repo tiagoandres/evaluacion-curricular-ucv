@@ -275,3 +275,12 @@ select {
 .dark .theme-tip-text {
   color: #c7d2fe !important;
 }
+
+/* Custom Teacher Tag Colors */
+.theme-teacher-tag {
+  color: #000000 !important;
+}
+
+.dark .theme-teacher-tag {
+  color: #ffffff !important;
+}

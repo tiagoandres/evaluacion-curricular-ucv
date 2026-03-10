@@ -33,17 +33,17 @@ export default function TopCoursesTable({ data }: Props) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.7 }}
-            className="glow-card p-5"
+            className="glow-card p-6 rounded-2xl flex flex-col justify-between"
         >
-            <div className="flex items-center gap-3 mb-2">
-                <Trophy size={16} style={{ color: '#f59e0b' }} />
-                <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
-                    Top 5 Asignaturas (Mayor Calidad)
-                </h3>
+            <div className="flex items-center gap-3 shrink-0 mb-4">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-amber-500/10 text-amber-500">
+                    <Trophy size={20} />
+                </div>
+                <div>
+                    <h4 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Top 5 Asignaturas (Mayor Calidad)</h4>
+                    <p className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Asignaturas con mayor calidad de unidad curricular</p>
+                </div>
             </div>
-            <p className="text-xs mb-4 font-medium" style={{ color: 'var(--text-secondary)' }}>
-                Asignaturas con mayor calidad de unidad curricular
-            </p>
 
             <div className="overflow-x-auto">
                 <table className="data-table">
@@ -96,28 +96,28 @@ export default function TopCoursesTable({ data }: Props) {
                                 </td>
                                 <td style={{ textAlign: 'center' }}>
                                     <div className="flex items-center justify-center gap-2">
-                                        <span className="text-sm font-semibold" style={{ color: getScoreColor(course.contenidos, 100) }}>
+                                        <span className="text-sm font-extrabold" style={{ color: getScoreColor(course.contenidos, 100) }}>
                                             {course.contenidos.toFixed(1)}
                                         </span>
                                     </div>
                                 </td>
                                 <td style={{ textAlign: 'center' }}>
                                     <div className="flex items-center justify-center gap-2">
-                                        <span className="text-sm font-semibold" style={{ color: getScoreColor(course.evaluacion, 100) }}>
+                                        <span className="text-sm font-extrabold" style={{ color: getScoreColor(course.evaluacion, 100) }}>
                                             {course.evaluacion.toFixed(1)}
                                         </span>
                                     </div>
                                 </td>
                                 <td style={{ textAlign: 'center' }}>
                                     <div className="flex items-center justify-center gap-2">
-                                        <span className="text-sm font-semibold" style={{ color: getScoreColor(course.indice, 100) }}>
+                                        <span className="text-sm font-extrabold" style={{ color: getScoreColor(course.indice, 100) }}>
                                             {course.indice.toFixed(1)}
                                         </span>
                                     </div>
                                 </td>
                                 <td style={{ textAlign: 'center' }}>
                                     <div className="flex items-center justify-center gap-2">
-                                        <span className="text-sm font-semibold" style={{ color: getScoreColor(course.utilidad, 10) }}>
+                                        <span className="text-sm font-extrabold" style={{ color: getScoreColor(course.utilidad, 10) }}>
                                             {course.utilidad.toFixed(1)}
                                         </span>
                                     </div>

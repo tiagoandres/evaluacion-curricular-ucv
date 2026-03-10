@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Activity } from 'lucide-react';
 import {
     Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
     ResponsiveContainer, Tooltip,
@@ -62,14 +63,17 @@ export default function RadarPerformanceChart({ data }: Props) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="glow-card p-5"
+            className="glow-card p-6 rounded-2xl flex flex-col justify-between"
         >
-            <h3 className="text-sm font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
-                Desempeño por Dimensión
-            </h3>
-            <p className="text-xs mb-4 font-medium" style={{ color: 'var(--text-secondary)' }}>
-                Evaluación integral en las 3 dimensiones clave
-            </p>
+            <div className="flex items-center gap-3 shrink-0 mb-4">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-500/10 text-indigo-500">
+                    <Activity size={20} />
+                </div>
+                <div>
+                    <h4 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Desempeño por Dimensión</h4>
+                    <p className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Evaluación integral en las 3 dimensiones clave</p>
+                </div>
+            </div>
             <div className="w-full h-[300px] mt-2 mb-2">
                 <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="56%" outerRadius="88%" data={data}>
