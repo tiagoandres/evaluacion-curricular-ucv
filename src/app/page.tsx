@@ -64,10 +64,9 @@ export default function Home() {
 
       {/* Main content */}
       <main
-        className="flex-1 transition-all duration-300 ease-out"
+        className="flex-1 transition-all duration-300 ease-out min-w-0 px-4 md:px-10 py-6"
         style={{
           marginLeft: sidebarCollapsed ? '72px' : '260px', // Updated open width to 260px for a more compact look
-          padding: '24px 40px',
         }}
       >
         {/* Status bar */}

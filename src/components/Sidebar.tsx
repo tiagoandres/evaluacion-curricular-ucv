@@ -61,19 +61,18 @@ export default function Sidebar({ activeModule, onModuleChange, collapsed, onCol
                         animate={{ opacity: 1 }}
                         className="flex flex-col items-center justify-center shrink-0"
                     >
-                        <span className="text-4xl font-serif" style={{ color: 'var(--text-primary)' }}>Ψ</span>
+                        <img src="/logo-escuela.png" alt="Logo Escuela" className="theme-logo-img h-[36px] w-auto object-contain transition-all" />
                     </motion.div>
                 ) : (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="flex items-center gap-2 overflow-hidden w-full whitespace-nowrap pl-2"
-                        style={{ color: 'var(--text-primary)' }}
+                        className="flex items-center gap-2.5 w-full pl-1"
                     >
-                        <span className="text-5xl font-serif leading-none h-[54px] flex items-center justify-center -mt-2">Ψ</span>
-                        <div className="flex flex-col justify-center translate-y-[-4px]">
-                            <span className="text-[14px] italic font-medium leading-tight opacity-80">Escuela de Psicología</span>
-                            <span className="text-[26px] font-medium tracking-tight leading-[1.1]">UCV</span>
+                        <img src="/logo-escuela.png" alt="Logo Escuela" className="theme-logo-img h-[46px] w-auto shrink-0 object-contain transition-all" />
+                        <div className="flex flex-col justify-center">
+                            <span className="theme-logo-text text-[14px] italic font-medium leading-[1.3]">Escuela de Psicología</span>
+                            <span className="theme-logo-text text-[26px] font-medium tracking-tight leading-[1.1]">UCV</span>
                         </div>
                     </motion.div>
                 )}

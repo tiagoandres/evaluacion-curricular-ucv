@@ -1,35 +1,33 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, TrendingUp } from 'lucide-react';
+import { Trophy, TrendingUp, Star } from 'lucide-react';
 
 interface CourseData {
     asignatura: string;
     docentes: string;
     indice: number;
-    nps: number;
+    contenidos: number;
+    evaluacion: number;
+    utilidad: number;
+    count: number;
 }
 
 interface Props {
     data: CourseData[];
 }
 
-function getScoreColor(score: number): string {
-    if (score >= 90) return '#10b981';
-    if (score >= 75) return '#22d3ee';
-    if (score >= 60) return '#f59e0b';
-    return '#ef4444';
-}
-
-function getNPSColor(nps: number): string {
-    if (nps >= 8) return '#10b981';
-    if (nps >= 6) return '#22d3ee';
-    if (nps >= 4) return '#f59e0b';
+function getScoreColor(score: number, max: number): string {
+    const percentage = score / max;
+    if (percentage >= 0.9) return '#10b981';
+    if (percentage >= 0.75) return '#22d3ee';
+    if (percentage >= 0.6) return '#f59e0b';
     return '#ef4444';
 }
 
 export default function TopCoursesTable({ data }: Props) {
+    const [hoveredInfo, setHoveredInfo] = useState<{ asignatura: string, docentes: string, x: number, y: number } | null>(null);
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -53,9 +51,11 @@ export default function TopCoursesTable({ data }: Props) {
                         <tr>
                             <th>#</th>
                             <th>Asignatura</th>
-                            <th>Docentes</th>
-                            <th>Calidad</th>
-                            <th>NPS Docente</th>
+                            <th style={{ textAlign: 'center' }}>Nº Eval.</th>
+                            <th style={{ textAlign: 'center' }}>Índice<br />Contenidos</th>
+                            <th style={{ textAlign: 'center' }}>Índice<br />Evaluación</th>
+                            <th style={{ textAlign: 'center' }}>Índice<br />Calidad</th>
+                            <th style={{ textAlign: 'center' }}>Utilidad</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -80,45 +80,71 @@ export default function TopCoursesTable({ data }: Props) {
                                         {i + 1}
                                     </span>
                                 </td>
-                                <td className="font-medium">{course.asignatura}</td>
-                                <td>
-                                    <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                        {course.docentes}
+                                <td
+                                    className="font-medium cursor-help relative"
+                                    onMouseMove={(e) => setHoveredInfo({ asignatura: course.asignatura, docentes: course.docentes, x: e.clientX, y: e.clientY })}
+                                    onMouseLeave={() => setHoveredInfo(null)}
+                                >
+                                    <span className="border-b border-dashed border-gray-400 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors inline-block py-1">
+                                        {course.asignatura}
                                     </span>
                                 </td>
-                                <td>
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(99, 102, 241, 0.1)', maxWidth: '80px' }}>
-                                            <div
-                                                className="h-full rounded-full transition-all duration-500"
-                                                style={{
-                                                    width: `${Math.min(100, Math.max(0, course.indice))}%`,
-                                                    background: getScoreColor(course.indice),
-                                                }}
-                                            />
-                                        </div>
-                                        <span className="text-sm font-semibold" style={{ color: getScoreColor(course.indice) }}>
+                                <td style={{ textAlign: 'center' }}>
+                                    <span className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                                        {course.count}
+                                    </span>
+                                </td>
+                                <td style={{ textAlign: 'center' }}>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <span className="text-sm font-semibold" style={{ color: getScoreColor(course.contenidos, 100) }}>
+                                            {course.contenidos.toFixed(1)}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td style={{ textAlign: 'center' }}>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <span className="text-sm font-semibold" style={{ color: getScoreColor(course.evaluacion, 100) }}>
+                                            {course.evaluacion.toFixed(1)}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td style={{ textAlign: 'center' }}>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <span className="text-sm font-semibold" style={{ color: getScoreColor(course.indice, 100) }}>
                                             {course.indice.toFixed(1)}
                                         </span>
                                     </div>
                                 </td>
-                                <td>
-                                    <span
-                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
-                                        style={{
-                                            background: `${getNPSColor(course.nps)}15`,
-                                            color: getNPSColor(course.nps),
-                                        }}
-                                    >
-                                        <TrendingUp size={12} />
-                                        {course.nps.toFixed(1)}
-                                    </span>
+                                <td style={{ textAlign: 'center' }}>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <span className="text-sm font-semibold" style={{ color: getScoreColor(course.utilidad, 10) }}>
+                                            {course.utilidad.toFixed(1)}
+                                        </span>
+                                    </div>
                                 </td>
                             </motion.tr>
                         ))}
                     </tbody>
                 </table>
             </div>
+
+            {/* Hover tooltip for teachers */}
+            {hoveredInfo && (
+                <div
+                    className="fixed z-[100] p-3 rounded-xl shadow-2xl border pointer-events-none max-w-[280px]"
+                    style={{
+                        top: hoveredInfo.y + 15,
+                        left: hoveredInfo.x + 15,
+                        background: 'var(--bg-card)',
+                        borderColor: 'var(--border-primary)',
+                        color: 'var(--text-primary)'
+                    }}
+                >
+                    <p className="font-bold text-sm mb-1">{hoveredInfo.asignatura}</p>
+                    <p className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Docentes que la dictan:</p>
+                    <p className="text-xs font-medium leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{hoveredInfo.docentes}</p>
+                </div>
+            )}
         </motion.div>
     );
 }

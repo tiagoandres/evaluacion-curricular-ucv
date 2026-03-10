@@ -17,13 +17,39 @@ interface Props {
     data: RadarData[];
 }
 
+function CustomAngleTick({ payload, x, y, cx, cy, fill, fontSize, className, textAnchor }: any) {
+    const isTop = payload.value === 'Contenidos';
+    const isRight = payload.value === 'Evaluación';
+    const isLeft = payload.value === 'Desempeño Docente';
+
+    let xOffset = 0;
+    let yOffset = 0;
+
+    if (isTop) yOffset = -10;
+    if (isRight) { xOffset = 15; yOffset = 8; }
+    if (isLeft) { xOffset = -15; yOffset = 8; }
+
+    return (
+        <text
+            x={x + xOffset}
+            y={y + yOffset}
+            fill={fill}
+            fontSize={fontSize}
+            className={className}
+            textAnchor={isRight ? 'start' : isLeft ? 'end' : 'middle'}
+        >
+            {payload.value}
+        </text>
+    );
+}
+
 function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: RadarData }> }) {
     if (active && payload && payload.length) {
         const d = payload[0].payload;
         return (
             <div className="custom-tooltip">
                 <p className="label">{d.dimension}</p>
-                <p className="value">{`Puntuación: ${d.value.toFixed(2)} / 10`}</p>
+                <p className="value">{`Puntuación: ${d.value.toFixed(2)} / 100`}</p>
             </div>
         );
     }
@@ -42,19 +68,19 @@ export default function RadarPerformanceChart({ data }: Props) {
                 Desempeño por Dimensión
             </h3>
             <p className="text-xs mb-4 font-medium" style={{ color: 'var(--text-secondary)' }}>
-                Evaluación integral en las 4 dimensiones clave
+                Evaluación integral en las 3 dimensiones clave
             </p>
-            <div className="w-full h-[220px]">
+            <div className="w-full h-[300px] mt-2 mb-2">
                 <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
+                    <RadarChart cx="50%" cy="56%" outerRadius="88%" data={data}>
                         <PolarGrid stroke="var(--border-primary)" />
                         <PolarAngleAxis
                             dataKey="dimension"
-                            tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
+                            tick={<CustomAngleTick fill="var(--text-secondary)" fontSize={11} />}
                         />
                         <PolarRadiusAxis
                             angle={90}
-                            domain={[0, 10]}
+                            domain={[0, 100]}
                             tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
                             axisLine={false}
                             tickCount={6}

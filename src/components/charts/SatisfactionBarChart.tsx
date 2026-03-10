@@ -50,11 +50,11 @@ export default function SatisfactionBarChart({ data, isByAsignatura = false }: P
                     : 'Comparativa de calidad entre Ciclo Básico, Mención y Teorías Psicológicas'
                 }
             </p>
-            <div className="w-full h-[220px]">
+            <div className="w-full h-[300px] mt-2 mb-2">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                         data={data}
-                        margin={{ top: 5, right: 10, left: -10, bottom: isByAsignatura ? 60 : 5 }}
+                        margin={{ top: 20, right: 10, left: -10, bottom: isByAsignatura ? 60 : 5 }}
                     >
                         <defs>
                             {BAR_COLORS.map((color, i) => (

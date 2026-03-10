@@ -60,11 +60,7 @@ export function getGenderDistribution(data: SurveyEntry[]): { genero: string; ca
     }));
 }
 
-export function getGestionScore(data: SurveyEntry[]): number {
-    if (data.length === 0) return 0;
-    const sum = data.reduce((acc, d) => acc + (d.gestionScore || 0), 0);
-    return parseFloat((sum / data.length).toFixed(2));
-}
+// Removed getGestionScore as it is no longer needed
 
 export function getContenidosScore(data: SurveyEntry[]): number {
     if (data.length === 0) return 0;
@@ -86,10 +82,9 @@ export function getDesempenoDocenteScore(data: SurveyEntry[]): number {
 
 export function getRadarData(data: SurveyEntry[]) {
     return [
-        { dimension: 'Gestión', value: getGestionScore(data), fullMark: 10 },
-        { dimension: 'Contenidos y Recursos', value: getContenidosScore(data), fullMark: 10 },
-        { dimension: 'Evaluación', value: getEvaluacionScore(data), fullMark: 10 },
-        { dimension: 'Desempeño Docente', value: getDesempenoDocenteScore(data), fullMark: 10 },
+        { dimension: 'Contenidos', value: getContenidosScore(data), fullMark: 100 },
+        { dimension: 'Evaluación', value: getEvaluacionScore(data), fullMark: 100 },
+        { dimension: 'Desempeño Docente', value: getDesempenoDocenteScore(data), fullMark: 100 },
     ];
 }
 
@@ -139,13 +134,22 @@ export function getTopCourses(data: SurveyEntry[], limit: number = 5) {
     const courseStats = Object.entries(courseMap).map(([asignatura, entries]) => {
         // Get unique docentes
         const docentes = [...new Set(entries.map(e => e.docente))];
-        const nps = getNPSDocente(entries);
         const indice = getCalidadCurricular(entries);
-        return { asignatura, docentes: docentes.join(', '), indice, nps };
+        const contenidos = getContenidosScore(entries);
+        const evaluacion = getEvaluacionScore(entries);
+        const utilidad = getUtilidadGlobal(entries);
+        const count = entries.length;
+        return { asignatura, docentes: docentes.join(', '), indice, contenidos, evaluacion, utilidad, count };
     });
 
     return courseStats
-        .sort((a, b) => b.indice - a.indice)
+        .sort((a, b) => {
+            // Calculate a weighted score: Index * log10(Evaluations + 1)
+            // This balances high indices with high evaluation counts
+            const rankScoreA = a.indice * Math.log10(a.count + 1);
+            const rankScoreB = b.indice * Math.log10(b.count + 1);
+            return rankScoreB - rankScoreA;
+        })
         .slice(0, limit);
 }
 
@@ -164,11 +168,10 @@ export interface DocenteStats {
     docente: string;
     asignaturas: string;
     evaluaciones: number;
-    promedioGestion: number;
     promedioContenidos: number;
     promedioEvaluacion: number;
     promedioDesempeno: number;
-    promedioCalidad: number;
+    promedioNPS: number;
 }
 
 export function getVistaDetalladaData(data: SurveyEntry[]): DocenteStats[] {
@@ -184,11 +187,10 @@ export function getVistaDetalladaData(data: SurveyEntry[]): DocenteStats[] {
             docente,
             asignaturas,
             evaluaciones: entries.length,
-            promedioGestion: getGestionScore(entries),
             promedioContenidos: getContenidosScore(entries),
             promedioEvaluacion: getEvaluacionScore(entries),
             promedioDesempeno: getDesempenoDocenteScore(entries),
-            promedioCalidad: getCalidadCurricular(entries)
+            promedioNPS: getNPSDocente(entries)
         };
     });
 }

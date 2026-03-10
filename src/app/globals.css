@@ -199,7 +199,7 @@ select {
   background: rgba(99, 102, 241, 0.08);
   padding: 12px 16px;
   text-align: left;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -248,4 +248,21 @@ select {
 .custom-tooltip .value {
   color: var(--accent-secondary) !important;
   font-size: 0.875rem;
+}
+
+/* Theme custom logo colors */
+.theme-logo-img {
+  filter: brightness(0) !important;
+}
+
+.dark .theme-logo-img {
+  filter: brightness(0) invert(1) !important;
+}
+
+.theme-logo-text {
+  color: #000000 !important;
+}
+
+.dark .theme-logo-text {
+  color: #ffffff !important;
 }
