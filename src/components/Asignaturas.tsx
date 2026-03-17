@@ -16,6 +16,7 @@ export default function Asignaturas() {
 
     const [selectedCiclo, setSelectedCiclo] = useState<string | 'all'>('all');
     const [selectedDepartamento, setSelectedDepartamento] = useState<string | 'all'>('all');
+    const [selectedCatedra, setSelectedCatedra] = useState<string | 'all'>('all');
     const [selectedAsignatura, setSelectedAsignatura] = useState<string | 'all'>('all');
 
     // For Search Auto-complete
@@ -58,10 +59,28 @@ export default function Asignaturas() {
         return Array.from(set).sort() as string[];
     }, [surveyData, selectedCiclo]);
 
-    const availableAsignaturas = useMemo(() => {
+    const catedras = useMemo(() => {
         let options = surveyData;
         if (selectedCiclo !== 'all') options = options.filter(d => d.ciclo === selectedCiclo);
         if (selectedDepartamento !== 'all') options = options.filter(d => d.departamento === selectedDepartamento);
+        const set = new Set(options.map(d => d.catedra).filter(Boolean));
+        return Array.from(set).sort() as string[];
+    }, [surveyData, selectedCiclo, selectedDepartamento]);
+
+    const asignaturasOptions = useMemo(() => {
+        let options = surveyData;
+        if (selectedCiclo !== 'all') options = options.filter(d => d.ciclo === selectedCiclo);
+        if (selectedDepartamento !== 'all') options = options.filter(d => d.departamento === selectedDepartamento);
+        if (selectedCatedra !== 'all') options = options.filter(d => d.catedra === selectedCatedra);
+        const set = new Set(options.map(d => d.asignatura).filter(Boolean));
+        return Array.from(set).sort() as string[];
+    }, [surveyData, selectedCiclo, selectedDepartamento, selectedCatedra]);
+
+    const availableAsignaturasSearch = useMemo(() => {
+        let options = surveyData;
+        if (selectedCiclo !== 'all') options = options.filter(d => d.ciclo === selectedCiclo);
+        if (selectedDepartamento !== 'all') options = options.filter(d => d.departamento === selectedDepartamento);
+        if (selectedCatedra !== 'all') options = options.filter(d => d.catedra === selectedCatedra);
 
         // Group by name + department to handle duplicates
         const map = new Map<string, { nombre: string, departamento: string }>();
@@ -75,7 +94,7 @@ export default function Asignaturas() {
         });
 
         return Array.from(map.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
-    }, [surveyData, selectedCiclo, selectedDepartamento]);
+    }, [surveyData, selectedCiclo, selectedDepartamento, selectedCatedra]);
 
     // Handle Search dropdown click outside
     useEffect(() => {
@@ -90,25 +109,31 @@ export default function Asignaturas() {
 
     // Filtered matches for the search bar
     const searchResults = useMemo(() => {
-        if (!searchQuery) return availableAsignaturas;
+        if (!searchQuery) return availableAsignaturasSearch;
         const query = searchQuery.toLowerCase();
-        return availableAsignaturas.filter(a =>
+        return availableAsignaturasSearch.filter(a =>
             a.nombre.toLowerCase().includes(query) ||
             a.departamento.toLowerCase().includes(query)
         );
-    }, [searchQuery, availableAsignaturas]);
+    }, [searchQuery, availableAsignaturasSearch]);
 
     // Derived subject data if an Asignatura is selected
     const subjectDataList = useMemo(() => {
         if (selectedAsignatura === 'all') return [];
-        // Extract the original subject name since the dropdown value might include the department identifier if we encoded it, 
-        // but let's store selectedAsignatura as "Nombre|Departamento" to uniquely identify it.
+        
+        let filtered = surveyData;
+        if (selectedCiclo !== 'all') filtered = filtered.filter(d => d.ciclo === selectedCiclo);
+        if (selectedDepartamento !== 'all') filtered = filtered.filter(d => d.departamento === selectedDepartamento);
+        if (selectedCatedra !== 'all') filtered = filtered.filter(d => d.catedra === selectedCatedra);
+        
         const [nombre, dep] = selectedAsignatura.split('|');
-        return surveyData.filter(d =>
-            d.asignatura === nombre &&
-            (d.departamento || 'Sin departamento') === dep
-        );
-    }, [selectedAsignatura, surveyData]);
+        filtered = filtered.filter(d => d.asignatura === nombre);
+        if (dep) {
+            filtered = filtered.filter(d => (d.departamento || 'Sin departamento') === dep);
+        }
+        
+        return filtered;
+    }, [selectedAsignatura, selectedCiclo, selectedDepartamento, selectedCatedra, surveyData]);
 
     const handleSelectAsignatura = (nombre: string, departamento: string) => {
         setSelectedAsignatura(`${nombre}|${departamento}`);
@@ -119,6 +144,7 @@ export default function Asignaturas() {
     const handleClearFilters = () => {
         setSelectedCiclo('all');
         setSelectedDepartamento('all');
+        setSelectedCatedra('all');
         setSelectedAsignatura('all');
         setSearchQuery('');
     };
@@ -152,7 +178,7 @@ export default function Asignaturas() {
         }, 500);
     };
 
-    const hasActiveFilters = selectedCiclo !== 'all' || selectedDepartamento !== 'all' || selectedAsignatura !== 'all';
+    const hasActiveFilters = selectedCiclo !== 'all' || selectedDepartamento !== 'all' || selectedCatedra !== 'all' || selectedAsignatura !== 'all';
 
     // Calculation of metrics
     const metrics = useMemo(() => {
@@ -533,12 +559,13 @@ export default function Asignaturas() {
                             onChange={(e) => {
                                 setSelectedCiclo(e.target.value);
                                 setSelectedDepartamento('all');
+                                setSelectedCatedra('all');
                                 setSelectedAsignatura('all');
                             }}
                             className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full sm:w-auto border border-gray-200 dark:border-gray-800"
                             style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                         >
-                            <option value="all">Todos los Ciclos</option>
+                            <option value="all">Ciclo</option>
                             {ciclos.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                     </div>
@@ -548,13 +575,43 @@ export default function Asignaturas() {
                             value={selectedDepartamento}
                             onChange={(e) => {
                                 setSelectedDepartamento(e.target.value);
+                                setSelectedCatedra('all');
                                 setSelectedAsignatura('all');
                             }}
-                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate flex-1 min-w-[200px] border border-gray-200 dark:border-gray-800"
+                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate flex-1 min-w-[180px] border border-gray-200 dark:border-gray-800"
                             style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                         >
-                            <option value="all">Todos los Departamentos</option>
+                            <option value="all">Departamento</option>
                             {departamentos.map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
+                    </div>
+
+                    <div className="relative w-full sm:w-auto">
+                        <select
+                            value={selectedCatedra}
+                            onChange={(e) => {
+                                setSelectedCatedra(e.target.value);
+                                setSelectedAsignatura('all');
+                            }}
+                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate flex-1 min-w-[180px] border border-gray-200 dark:border-gray-800"
+                            style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
+                        >
+                            <option value="all">Cátedra</option>
+                            {catedras.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    </div>
+
+                    <div className="relative w-full sm:w-auto">
+                        <select
+                            value={selectedAsignatura.includes('|') ? 'all' : selectedAsignatura}
+                            onChange={(e) => {
+                                setSelectedAsignatura(e.target.value);
+                            }}
+                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate flex-1 min-w-[180px] border border-gray-200 dark:border-gray-800"
+                            style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
+                        >
+                            <option value="all">Asignatura</option>
+                            {asignaturasOptions.map(a => <option key={a} value={a}>{a}</option>)}
                         </select>
                     </div>
 
@@ -586,7 +643,7 @@ export default function Asignaturas() {
 
                     {/* Auto-complete dropdown */}
                     <AnimatePresence>
-                        {isSearchFocused && availableAsignaturas.length > 0 && (
+                        {isSearchFocused && availableAsignaturasSearch.length > 0 && (
                             <motion.div
                                 initial={{ opacity: 0, y: 5 }}
                                 animate={{ opacity: 1, y: 0 }}
