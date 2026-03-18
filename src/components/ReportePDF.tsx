@@ -232,6 +232,36 @@ export default function ReportePDF({ metrics, asignaturaName, departamentoName }
                     <StaticEvaluacionBar title="Las evaluaciones incluyeron coevaluación (Usted evaluó a sus compañeros en algún momento)" data={metrics.evaluacionesData.e6} />
                 </div>
             </PageContainer>
+
+            {/* PAGINA 5: Indice de Desempeño Estudiantil */}
+            <PageContainer id="pdf-page-5">
+                <div className="flex items-center gap-3 mb-4" style={{ height: '40px' }}>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: '#ccfbf1', color: '#0d9488' }}>
+                        <TrendingUp size={20} color="#0d9488" />
+                    </div>
+                    <h2 className="text-2xl font-black" style={{ color: '#0d9488', lineHeight: '40px', margin: 0 }}>
+                        Índice de desempeño estudiantil
+                    </h2>
+                    <div className="ml-auto text-3xl font-black" style={{ color: getScoreColorLight(metrics.avgDesempenoEstudiantil), lineHeight: '40px' }}>
+                        {metrics.avgDesempenoEstudiantil.toFixed(1)} <span className="text-sm" style={{ color: '#94a3b8' }}>/ 100</span>
+                    </div>
+                </div>
+                <p className="text-sm font-medium leading-relaxed mb-6 p-4 rounded-lg" style={{ backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0', color: '#1e293b' }}>
+                    Este indice refleja el rendimiento y la relación del estudiante con la asignatura a través de su propia autoevaluación en diversos ítems clave.
+                </p>
+
+                <div className="space-y-0">
+                    <StaticContenidosBar title="1. Usted mantuvo una buena motivación para el estudio" data={metrics.desempenoData.d1} />
+                    <StaticContenidosBar title="2. A usted le resultó fácil organizar y distribuir el tiempo en esta asignatura" data={metrics.desempenoData.d2} />
+                    <StaticContenidosBar title="3. El tiempo que le dedicó al estudio fue suficiente" data={metrics.desempenoData.d3} />
+                    <StaticContenidosBar title="4. Leyó la mayor parte de la bibliografía recomendada" data={metrics.desempenoData.d4} />
+                    <StaticContenidosBar title="5. Su asistencia a clases fue regular y periódica" data={metrics.desempenoData.d5} />
+                    <StaticContenidosBar title="6. Sus hábitos de estudio fueron adecuados" data={metrics.desempenoData.d6} />
+                    <StaticContenidosBar title="7. Hizo un gran esfuerzo para aprobar la asignatura" data={metrics.desempenoData.d7} />
+                    <StaticContenidosBar title="8. Considera que su aprendizaje en esta asignatura fue excelente" data={metrics.desempenoData.d8} />
+                    <StaticContenidosBar title="9. Disfrutó mucho de esta asignatura, inclusive la recomendaría a otros estudiantes" data={metrics.desempenoData.d9} />
+                </div>
+            </PageContainer>
         </div>
     );
 }

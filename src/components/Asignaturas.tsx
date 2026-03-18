@@ -159,7 +159,7 @@ export default function Asignaturas() {
             try {
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pages = ['pdf-page-1', 'pdf-page-2', 'pdf-page-3', 'pdf-page-4'];
+                const pages = ['pdf-page-1', 'pdf-page-2', 'pdf-page-3', 'pdf-page-4', 'pdf-page-5'];
 
                 for (let i = 0; i < pages.length; i++) {
                     const el = document.getElementById(pages[i]);
