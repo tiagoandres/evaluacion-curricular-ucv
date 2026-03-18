@@ -1,6 +1,6 @@
 import React from 'react';
 import { PieChart, Pie, Cell } from 'recharts';
-import { Users, Layers, BookOpen, FileText, ThumbsUp } from 'lucide-react';
+import { Users, Layers, BookOpen, FileText, ThumbsUp, TrendingUp } from 'lucide-react';
 
 export default function ReportePDF({ metrics, asignaturaName, departamentoName }: any) {
     if (!metrics) return null;
@@ -40,10 +40,10 @@ export default function ReportePDF({ metrics, asignaturaName, departamentoName }
             <span className="text-[13px] font-bold leading-snug">{title}</span>
             <div className="flex justify-between items-center text-[10px] mt-1 font-semibold">
                 <div className="flex gap-2">
-                    {data.totalDesacuerdo > 0 && <span style={{ color: '#ef4444' }}>Tot. Desacuerdo: {data.totalDesacuerdo.toFixed(1)}%</span>}
+                    {data.totalDesacuerdo > 0 && <span style={{ color: '#ef4444' }}>Totalmente en Desacuerdo: {data.totalDesacuerdo.toFixed(1)}%</span>}
                     {data.desacuerdo > 0 && <span style={{ color: '#f97316' }}>En Desacuerdo: {data.desacuerdo.toFixed(1)}%</span>}
                     {data.acuerdo > 0 && <span style={{ color: '#14b8a6' }}>De Acuerdo: {data.acuerdo.toFixed(1)}%</span>}
-                    {data.totalAcuerdo > 0 && <span style={{ color: '#10b981' }}>Tot. Acuerdo: {data.totalAcuerdo.toFixed(1)}%</span>}
+                    {data.totalAcuerdo > 0 && <span style={{ color: '#10b981' }}>Totalmente de Acuerdo: {data.totalAcuerdo.toFixed(1)}%</span>}
                 </div>
             </div>
             <div className="w-full h-5 rounded overflow-hidden flex mt-1" style={{ backgroundColor: '#e5e7eb', lineHeight: '20px' }}>
@@ -83,26 +83,31 @@ export default function ReportePDF({ metrics, asignaturaName, departamentoName }
 
             {/* PAGINA 1: Resumen de la Asignatura */}
             <PageContainer id="pdf-page-1">
-                <div className="grid grid-cols-4 gap-4 mb-8">
-                    <div className="p-4 rounded-xl text-center flex flex-col items-center" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                        <Users size={20} className="mb-2" color="#94a3b8" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: '#64748b' }}>Encuestas</span>
-                        <span className="text-3xl font-black" style={{ color: '#1e293b' }}>{metrics.count}</span>
+                <div className="grid grid-cols-5 gap-3 mb-8">
+                    <div className="p-3 rounded-xl text-center flex flex-col items-center" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                        <Users size={18} className="mb-1" color="#94a3b8" />
+                        <span className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: '#64748b' }}>Encuestas</span>
+                        <span className="text-2xl font-black" style={{ color: '#1e293b' }}>{metrics.count}</span>
                     </div>
-                    <div className="p-4 rounded-xl text-center flex flex-col items-center" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                        <BookOpen size={20} className="mb-2" color="#c084fc" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: '#64748b' }}>Contenidos</span>
-                        <span className="text-3xl font-black" style={{ color: getScoreColorLight(metrics.avgContenidos) }}>{metrics.avgContenidos.toFixed(1)}</span>
+                    <div className="p-3 rounded-xl text-center flex flex-col items-center" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                        <BookOpen size={18} className="mb-1" color="#c084fc" />
+                        <span className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: '#64748b' }}>Contenidos</span>
+                        <span className="text-2xl font-black" style={{ color: getScoreColorLight(metrics.avgContenidos) }}>{metrics.avgContenidos.toFixed(1)}</span>
                     </div>
-                    <div className="p-4 rounded-xl text-center flex flex-col items-center" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                        <FileText size={20} className="mb-2" color="#f472b6" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: '#64748b' }}>Evaluación</span>
-                        <span className="text-3xl font-black" style={{ color: getScoreColorLight(metrics.avgEvaluacion) }}>{metrics.avgEvaluacion.toFixed(1)}</span>
+                    <div className="p-3 rounded-xl text-center flex flex-col items-center" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                        <FileText size={18} className="mb-1" color="#f472b6" />
+                        <span className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: '#64748b' }}>Evaluación</span>
+                        <span className="text-2xl font-black" style={{ color: getScoreColorLight(metrics.avgEvaluacion) }}>{metrics.avgEvaluacion.toFixed(1)}</span>
                     </div>
-                    <div className="p-4 rounded-xl text-center flex flex-col items-center" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                        <Layers size={20} className="mb-2" color="#818cf8" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: '#64748b' }}>Calidad</span>
-                        <span className="text-3xl font-black" style={{ color: getScoreColorLight(metrics.avgCalidad) }}>{metrics.avgCalidad.toFixed(1)}</span>
+                    <div className="p-3 rounded-xl text-center flex flex-col items-center" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                        <TrendingUp size={18} className="mb-1" color="#14b8a6" />
+                        <span className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: '#64748b' }}>Desempeño</span>
+                        <span className="text-2xl font-black" style={{ color: getScoreColorLight(metrics.avgDesempenoEstudiantil) }}>{metrics.avgDesempenoEstudiantil.toFixed(1)}</span>
+                    </div>
+                    <div className="p-3 rounded-xl text-center flex flex-col items-center" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                        <Layers size={18} className="mb-1" color="#818cf8" />
+                        <span className="text-[9px] font-bold uppercase tracking-widest mb-1" style={{ color: '#64748b' }}>Valoración</span>
+                        <span className="text-2xl font-black" style={{ color: getScoreColorLight(metrics.avgCalidad) }}>{metrics.avgCalidad.toFixed(1)}</span>
                     </div>
                 </div>
 

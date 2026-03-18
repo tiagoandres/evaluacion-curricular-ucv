@@ -25,7 +25,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
         return (
             <div className="custom-tooltip">
                 <p className="label">{label}</p>
-                <p className="value">{`Calidad: ${payload[0].value.toFixed(2)}`}</p>
+                <p className="value">{`Valoración: ${payload[0].value.toFixed(2)}`}</p>
             </div>
         );
     }
@@ -47,11 +47,11 @@ export default function SatisfactionBarChart({ data, isByAsignatura = false }: P
                     <BarChartIcon size={20} />
                 </div>
                 <div>
-                    <h4 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{isByAsignatura ? 'Calidad por Asignatura' : 'Calidad por Ciclo'}</h4>
+                    <h4 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{isByAsignatura ? 'Valoración por Asignatura' : 'Valoración por Ciclo'}</h4>
                     <p className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
                         {isByAsignatura
-                            ? 'Comparativa de la calidad de unidad curricular entre asignaturas de la mención'
-                            : 'Comparativa de calidad entre Ciclo Básico, Mención y Teorías Psicológicas'
+                            ? 'Comparativa de la valoración de unidad curricular entre asignaturas de la mención'
+                            : 'Comparativa de valoración entre Ciclo Básico, Mención y Teorías Psicológicas'
                         }
                     </p>
                 </div>

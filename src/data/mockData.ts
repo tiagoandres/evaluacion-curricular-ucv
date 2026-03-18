@@ -14,6 +14,7 @@ export interface SurveyEntry {
   calidad_unidad_curricular: number; // 0-100
   utilidad_asignatura: number; // 1-10
   nps_docente: number; // 1-10
+  desempenoEstudiantil: number; // 0-100
   // Nuevos campos Asignaturas
   gestion1: string;
   gestion2: string;
@@ -40,6 +41,16 @@ export interface SurveyEntry {
   contenido_recursos10: string;
   contenido_recursos11: string;
   contenido_recursos12: string;
+  // Autoevaluación Estudiante
+  autoevaluacion1?: string;
+  autoevaluacion2?: string;
+  autoevaluacion3?: string;
+  autoevaluacion4?: string;
+  autoevaluacion5?: string;
+  autoevaluacion6?: string;
+  autoevaluacion7?: string;
+  autoevaluacion8?: string;
+  autoevaluacion9?: string;
 }
 
 export function mapSupabaseRowToSurveyEntry(row: any): SurveyEntry {
@@ -59,6 +70,7 @@ export function mapSupabaseRowToSurveyEntry(row: any): SurveyEntry {
     calidad_unidad_curricular: row.indice_calidad_curricular_transformado || 0,
     utilidad_asignatura: row.utilidad || 0,
     nps_docente: row.nps || 0,
+    desempenoEstudiantil: row.indice_calidad_estudiantil_transformado || 0,
     // Nuevos campos Asignaturas
     gestion1: row.gestion1 || '',
     gestion2: row.gestion2 || '',
@@ -84,6 +96,15 @@ export function mapSupabaseRowToSurveyEntry(row: any): SurveyEntry {
     contenido_recursos10: row.contenido_recursos10 || '',
     contenido_recursos11: row.contenido_recursos11 || '',
     contenido_recursos12: row.contenido_recursos12 || '',
+    autoevaluacion1: row.autoevaluacion_estudiante1 || '',
+    autoevaluacion2: row.autoevaluacion_estudiante2 || '',
+    autoevaluacion3: row.autoevaluacion_estudiante3 || '',
+    autoevaluacion4: row.autoevaluacion_estudiante4 || '',
+    autoevaluacion5: row.autoevaluacion_estudiante5 || '',
+    autoevaluacion6: row.autoevaluacion_estudiante6 || '',
+    autoevaluacion7: row.autoevaluacion_estudiante7 || '',
+    autoevaluacion8: row.autoevaluacion_estudiante8 || '',
+    autoevaluacion9: row.autoevaluacion_estudiante9 || '',
   };
 }
 

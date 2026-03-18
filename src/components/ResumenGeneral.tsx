@@ -159,7 +159,7 @@ export default function ResumenGeneral() {
                             <select
                                 value={selectedCiclo}
                                 onChange={(e) => handleCicloChange(e.target.value)}
-                                className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full sm:w-auto border border-gray-200 dark:border-gray-800 focus:border-indigo-500"
+                                className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full sm:w-auto border border-slate-300 dark:border-gray-800 focus:border-indigo-500"
                                 style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                             >
                                 <option value="all">Todos los Ciclos</option>
@@ -172,7 +172,7 @@ export default function ResumenGeneral() {
                             <select
                                 value={selectedDepartamento}
                                 onChange={(e) => handleDepartamentoChange(e.target.value)}
-                                className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate flex-1 min-w-[200px] border border-gray-200 dark:border-gray-800 focus:border-indigo-500"
+                                className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate flex-1 min-w-[200px] border border-slate-300 dark:border-gray-800 focus:border-indigo-500"
                                 style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                             >
                                 <option value="all">Todos los Departamentos</option>
@@ -185,7 +185,7 @@ export default function ResumenGeneral() {
                             <select
                                 value={selectedCatedra}
                                 onChange={(e) => handleCatedraChange(e.target.value)}
-                                className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate flex-1 min-w-[200px] border border-gray-200 dark:border-gray-800 focus:border-indigo-500"
+                                className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate flex-1 min-w-[200px] border border-slate-300 dark:border-gray-800 focus:border-indigo-500"
                                 style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                             >
                                 <option value="all">Todas las Cátedras</option>
@@ -198,7 +198,7 @@ export default function ResumenGeneral() {
                         {hasActiveFilters && (
                             <button
                                 onClick={handleClearFilters}
-                                className="flex items-center justify-center gap-2 text-sm font-medium rounded-xl px-4 py-3 cursor-pointer transition-all shadow-sm hover:opacity-80 dark:hover:bg-gray-800 w-full sm:w-auto shrink-0 border border-gray-200 dark:border-gray-800"
+                                className="flex items-center justify-center gap-2 text-sm font-medium rounded-xl px-4 py-3 cursor-pointer transition-all shadow-sm hover:opacity-80 dark:hover:bg-gray-800 w-full sm:w-auto shrink-0 border border-slate-300 dark:border-gray-800"
                                 style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                             >
                                 <X size={16} className="text-red-500" />
@@ -215,7 +215,7 @@ export default function ResumenGeneral() {
                     <div className="w-8 h-8 rounded-full border-2 border-t-[#6366f1] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <KPICard
                         title="Total Evaluaciones"
                         value={totalEvaluaciones}
@@ -231,14 +231,6 @@ export default function ResumenGeneral() {
                         icon={Star}
                         color="#22d3ee"
                         delay={0.1}
-                    />
-                    <KPICard
-                        title="NPS Docente"
-                        value={`${npsDocente}/10`}
-                        subtitle="Promedio de recomendación docente"
-                        icon={UserCheck}
-                        color="#a78bfa"
-                        delay={0.2}
                     />
                 </div>
             )}
