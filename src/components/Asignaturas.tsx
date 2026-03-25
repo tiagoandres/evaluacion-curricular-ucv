@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, Search, X, BookOpen, ThumbsUp, HelpCircle, Layers, CheckCircle2, FileText, Download, Loader2, TrendingUp } from 'lucide-react';
+import { Filter, Search, X, BookOpen, ThumbsUp, HelpCircle, Layers, CheckCircle2, FileText, Download, Loader2, TrendingUp, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { mapSupabaseRowToSurveyEntry, SurveyEntry } from '@/data/mockData';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, PieChart, Pie } from 'recharts';
@@ -108,15 +108,26 @@ export default function Asignaturas() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Filtered matches for the search bar
-    const searchResults = useMemo(() => {
-        if (!searchQuery) return availableAsignaturasSearch;
+    // Filtered matches for the search bar (only subjects)
+    const searchDropdownResults = useMemo(() => {
+        if (!searchQuery.trim()) return [];
         const query = searchQuery.toLowerCase();
-        return availableAsignaturasSearch.filter(a =>
-            a.nombre.toLowerCase().includes(query) ||
-            a.departamento.toLowerCase().includes(query)
-        );
-    }, [searchQuery, availableAsignaturasSearch]);
+        
+        const resultsMap = new Map();
+        
+        surveyData.forEach(entry => {
+            if (entry.asignatura.toLowerCase().includes(query)) {
+                if (!resultsMap.has(entry.asignatura)) {
+                    resultsMap.set(entry.asignatura, {
+                        nombre: entry.asignatura,
+                        departamento: entry.departamento
+                    });
+                }
+            }
+        });
+
+        return Array.from(resultsMap.values()).slice(0, 8);
+    }, [searchQuery, surveyData]);
 
     // Derived subject data if an Asignatura is selected
     const subjectDataList = useMemo(() => {
@@ -139,6 +150,12 @@ export default function Asignaturas() {
     const handleSelectAsignatura = (nombre: string, departamento: string) => {
         setSelectedAsignatura(`${nombre}|${departamento}`);
         setDisabledDocentes(new Set());
+        setSearchQuery('');
+        setIsSearchFocused(false);
+    };
+
+    const handleAsignaturaSelectFromSearch = (nombre: string, departamento: string) => {
+        handleSelectAsignatura(nombre, departamento);
         setSearchQuery('');
         setIsSearchFocused(false);
     };
@@ -586,15 +603,15 @@ export default function Asignaturas() {
                                 setSelectedCatedra('all');
                                 setSelectedAsignatura('all');
                             }}
-                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full sm:w-auto border border-slate-300 dark:border-gray-800"
+                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full sm:w-auto border border-gray-200 dark:border-gray-800 focus:border-indigo-500"
                             style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                         >
-                            <option value="all">Ciclo</option>
+                            <option value="all">Todos los Ciclos</option>
                             {ciclos.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                     </div>
 
-                    <div className="relative w-full sm:w-auto">
+                    <div className="relative w-full sm:w-auto flex-1 min-w-[140px]">
                         <select
                             value={selectedDepartamento}
                             onChange={(e) => {
@@ -603,15 +620,15 @@ export default function Asignaturas() {
                                 setSelectedAsignatura('all');
                                 setDisabledDocentes(new Set());
                             }}
-                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate flex-1 min-w-[180px] border border-slate-300 dark:border-gray-800"
+                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate border border-gray-200 dark:border-gray-800 focus:border-indigo-500"
                             style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                         >
-                            <option value="all">Departamento</option>
+                            <option value="all">Todos los Departamentos</option>
                             {departamentos.map(d => <option key={d} value={d}>{d}</option>)}
                         </select>
                     </div>
 
-                    <div className="relative w-full sm:w-auto">
+                    <div className="relative w-full sm:w-auto flex-1 min-w-[140px]">
                         <select
                             value={selectedCatedra}
                             onChange={(e) => {
@@ -619,24 +636,24 @@ export default function Asignaturas() {
                                 setSelectedAsignatura('all');
                                 setDisabledDocentes(new Set());
                             }}
-                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate flex-1 min-w-[180px] border border-slate-300 dark:border-gray-800"
+                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate border border-gray-200 dark:border-gray-800 focus:border-indigo-500"
                             style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                         >
-                            <option value="all">Cátedra</option>
+                            <option value="all">Todas las Cátedras</option>
                             {catedras.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                     </div>
 
-                    <div className="relative w-full sm:w-auto">
+                    <div className="relative w-full sm:w-auto flex-1 min-w-[140px]">
                         <select
                             value={selectedAsignatura.includes('|') ? 'all' : selectedAsignatura}
                             onChange={(e) => {
                                 setSelectedAsignatura(e.target.value);
                             }}
-                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate flex-1 min-w-[180px] border border-gray-200 dark:border-gray-800"
+                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate border border-gray-200 dark:border-gray-800 focus:border-indigo-500"
                             style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                         >
-                            <option value="all">Asignatura</option>
+                            <option value="all">Todas las Asignaturas</option>
                             {asignaturasOptions.map(a => <option key={a} value={a}>{a}</option>)}
                         </select>
                     </div>
@@ -644,7 +661,7 @@ export default function Asignaturas() {
                     {hasActiveFilters && (
                         <button
                             onClick={handleClearFilters}
-                            className="flex items-center justify-center gap-2 text-sm font-medium rounded-xl px-4 py-3 cursor-pointer transition-all shadow-sm hover:opacity-80 dark:hover:bg-gray-800 w-full sm:w-auto shrink-0 border border-slate-300 dark:border-gray-800"
+                            className="flex items-center justify-center gap-2 text-sm font-medium rounded-xl px-4 py-3 cursor-pointer transition-all shadow-sm hover:opacity-80 dark:hover:bg-gray-800 w-full sm:w-auto shrink-0 border border-gray-200 dark:border-gray-800"
                             style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                         >
                             <X size={16} className="text-red-500" />
@@ -659,17 +676,17 @@ export default function Asignaturas() {
                         <input
                             type="text"
                             placeholder="Buscar asignatura..."
-                            value={isSearchFocused ? searchQuery : (selectedAsignatura !== 'all' ? selectedAsignatura.split('|')[0] : '')}
-                            onFocus={() => { setIsSearchFocused(true); setSearchQuery(''); }}
+                            value={searchQuery}
+                            onFocus={() => { setIsSearchFocused(true); }}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full text-sm font-medium rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:border-indigo-500 transition-all shadow-sm border border-slate-300 dark:border-gray-800"
+                            className="w-full text-sm font-medium rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:border-indigo-500 transition-all shadow-sm border border-gray-200 dark:border-gray-800"
                             style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                         />
                     </div>
 
                     {/* Auto-complete dropdown */}
                     <AnimatePresence>
-                        {isSearchFocused && availableAsignaturasSearch.length > 0 && (
+                        {isSearchFocused && searchQuery.trim() !== '' && (
                             <motion.div
                                 initial={{ opacity: 0, y: 5 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -678,20 +695,20 @@ export default function Asignaturas() {
                                 className="absolute mt-2 w-full z-50 rounded-xl shadow-xl border overflow-hidden max-h-[300px] overflow-y-auto"
                                 style={{ background: 'var(--bg-card)', borderColor: 'var(--border-primary)' }}
                             >
-                                {searchResults.length === 0 ? (
+                                {searchDropdownResults.length === 0 ? (
                                     <div className="p-4 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-                                        No se encontraron asignaturas.
+                                        No se encontraron materias.
                                     </div>
                                 ) : (
                                     <ul className="py-1">
-                                        {searchResults.map((a, i) => (
+                                        {searchDropdownResults.map((match, i) => (
                                             <li
                                                 key={i}
-                                                onClick={() => handleSelectAsignatura(a.nombre, a.departamento)}
+                                                onClick={() => handleAsignaturaSelectFromSearch(match.nombre, match.departamento || '')}
                                                 className="px-4 py-2.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 cursor-pointer flex flex-col transition-colors"
                                             >
-                                                <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{a.nombre}</span>
-                                                <span className="text-[11px] uppercase tracking-wider mt-0.5" style={{ color: 'var(--text-muted)' }}>{a.departamento}</span>
+                                                <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{match.nombre}</span>
+                                                <span className="text-[11px] uppercase tracking-wider mt-0.5" style={{ color: 'var(--text-muted)' }}>{match.departamento}</span>
                                             </li>
                                         ))}
                                     </ul>
@@ -900,8 +917,10 @@ export default function Asignaturas() {
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 {/* Utilidad Segment */}
                                 <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="glow-card p-6 rounded-2xl">
-                                    <div className="flex items-center gap-2 mb-6">
-                                        <ThumbsUp size={18} className="text-emerald-500" />
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 shrink-0">
+                                            <ThumbsUp size={18} />
+                                        </div>
                                         <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>Utilidad de la Asignatura</h3>
                                     </div>
                                     <p className="text-xs mb-6 font-medium" style={{ color: 'var(--text-muted)' }}>
@@ -952,8 +971,10 @@ export default function Asignaturas() {
 
                                 {/* Gestión docente (Yes/No) */}
                                 <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }} className="glow-card p-6 rounded-2xl flex flex-col justify-center">
-                                    <div className="flex items-center gap-2 mb-6">
-                                        <HelpCircle size={18} className="text-indigo-500" />
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-500 shrink-0">
+                                            <HelpCircle size={18} />
+                                        </div>
                                         <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>Gestión (Respuestas Si/No)</h3>
                                     </div>
 
@@ -968,8 +989,10 @@ export default function Asignaturas() {
                             <div className="grid grid-cols-1">
                                 <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }} className="glow-card p-6 sm:p-8 rounded-2xl w-full">
                                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-                                        <div className="flex items-center gap-2">
-                                            <BookOpen size={18} className="text-orange-500 shrink-0" />
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2.5 rounded-xl bg-orange-500/10 text-orange-500 shrink-0">
+                                                <BookOpen size={18} />
+                                            </div>
                                             <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>Recursos pedagógicos: Frecuencia de uso en la asignatura</h3>
                                         </div>
                                         <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-semibold bg-gray-50 dark:bg-gray-800/40 px-3 py-2 rounded-lg border border-gray-100 dark:border-gray-800/60">
@@ -1204,14 +1227,34 @@ function HorizontalBar({ title, data }: { title: string, data: { yes: number, no
 
 function FrequencyBar({ title, data }: { title: string, data: { mucho: number, bastante: number, algo: number, poco: number, nada: number } }) {
     return (
-        <div className="flex flex-col gap-3 w-full group">
+        <div className="flex flex-col gap-3 w-full group cursor-default">
             <span className="text-[13px] font-bold leading-tight h-[2.5rem] flex items-center group-hover:text-indigo-500 transition-colors" style={{ color: 'var(--text-primary)' }}>{title}</span>
-            <div className="w-full h-4 rounded-lg overflow-hidden flex bg-slate-200 dark:bg-gray-800/80 shadow-inner border border-slate-200/50 dark:border-gray-700/50">
-                {data.nada > 0 && <div style={{ width: `${data.nada}%` }} className="h-full bg-rose-500 transition-all duration-700 border-r border-white/10" title={`Nada: ${data.nada.toFixed(1)}%`}></div>}
-                {data.poco > 0 && <div style={{ width: `${data.poco}%` }} className="h-full bg-orange-400 transition-all duration-700 border-r border-white/10" title={`Poco: ${data.poco.toFixed(1)}%`}></div>}
-                {data.algo > 0 && <div style={{ width: `${data.algo}%` }} className="h-full bg-amber-400 transition-all duration-700 border-r border-white/10" title={`Algo: ${data.algo.toFixed(1)}%`}></div>}
-                {data.bastante > 0 && <div style={{ width: `${data.bastante}%` }} className="h-full bg-teal-400 transition-all duration-700 border-r border-white/10" title={`Bastante: ${data.bastante.toFixed(1)}%`}></div>}
-                {data.mucho > 0 && <div style={{ width: `${data.mucho}%` }} className="h-full bg-emerald-500 transition-all duration-700" title={`Mucho: ${data.mucho.toFixed(1)}%`}></div>}
+            <div className="w-full h-6 rounded-lg overflow-hidden flex bg-slate-200 dark:bg-gray-800/80 shadow-inner border border-slate-200/50 dark:border-gray-700/50">
+                {data.nada > 0 && (
+                    <div style={{ width: `${data.nada}%` }} className="h-full bg-rose-500 transition-all duration-700 border-r border-white/10 shrink-0 flex items-center justify-center overflow-hidden" title={`Nada: ${data.nada.toFixed(1)}%`}>
+                        <span className="text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 truncate px-1">{data.nada.toFixed(1)}%</span>
+                    </div>
+                )}
+                {data.poco > 0 && (
+                    <div style={{ width: `${data.poco}%` }} className="h-full bg-orange-400 transition-all duration-700 border-r border-white/10 shrink-0 flex items-center justify-center overflow-hidden" title={`Poco: ${data.poco.toFixed(1)}%`}>
+                        <span className="text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 truncate px-1">{data.poco.toFixed(1)}%</span>
+                    </div>
+                )}
+                {data.algo > 0 && (
+                    <div style={{ width: `${data.algo}%` }} className="h-full bg-amber-400 transition-all duration-700 border-r border-white/10 shrink-0 flex items-center justify-center overflow-hidden" title={`Algo: ${data.algo.toFixed(1)}%`}>
+                        <span className="text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 truncate px-1">{data.algo.toFixed(1)}%</span>
+                    </div>
+                )}
+                {data.bastante > 0 && (
+                    <div style={{ width: `${data.bastante}%` }} className="h-full bg-teal-400 transition-all duration-700 border-r border-white/10 shrink-0 flex items-center justify-center overflow-hidden" title={`Bastante: ${data.bastante.toFixed(1)}%`}>
+                        <span className="text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 truncate px-1">{data.bastante.toFixed(1)}%</span>
+                    </div>
+                )}
+                {data.mucho > 0 && (
+                    <div style={{ width: `${data.mucho}%` }} className="h-full bg-emerald-500 transition-all duration-700 shrink-0 flex items-center justify-center overflow-hidden" title={`Mucho: ${data.mucho.toFixed(1)}%`}>
+                        <span className="text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 truncate px-1">{data.mucho.toFixed(1)}%</span>
+                    </div>
+                )}
             </div>
             <div className="flex justify-between text-[10px] items-center px-1">
                 <span className="font-black text-emerald-500">{(data.mucho + data.bastante).toFixed(1)}% Positivo</span>

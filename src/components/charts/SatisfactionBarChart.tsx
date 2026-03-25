@@ -43,8 +43,8 @@ export default function SatisfactionBarChart({ data, isByAsignatura = false }: P
             className="glow-card p-6 rounded-2xl flex flex-col justify-between"
         >
             <div className="flex items-center gap-3 shrink-0 mb-4">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-cyan-500/10 text-cyan-500">
-                    <BarChartIcon size={20} />
+                <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-500 shrink-0">
+                    <BarChartIcon size={18} />
                 </div>
                 <div>
                     <h4 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{isByAsignatura ? 'Valoración por Asignatura' : 'Valoración por Ciclo'}</h4>

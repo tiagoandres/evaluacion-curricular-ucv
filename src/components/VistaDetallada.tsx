@@ -108,8 +108,7 @@ export default function VistaDetallada() {
         let data = getVistaDetalladaData(filteredEntries);
         // Only return matches for the dropdown, limited to 10
         return data.filter(d =>
-            d.docente.toLowerCase().includes(query) ||
-            d.asignaturas.toLowerCase().includes(query)
+            d.docente.toLowerCase().includes(query)
         ).slice(0, 10);
     }, [filteredEntries, searchQuery]);
 
@@ -119,8 +118,7 @@ export default function VistaDetallada() {
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             data = data.filter(d =>
-                d.docente.toLowerCase().includes(query) ||
-                d.asignaturas.toLowerCase().includes(query)
+                d.docente.toLowerCase().includes(query)
             );
         }
 
@@ -231,7 +229,7 @@ export default function VistaDetallada() {
                             Vista Detallada
                         </h2>
                         <p className="text-base mt-2 font-medium" style={{ color: 'var(--text-secondary)' }}>
-                            Desglose de datos por docente y métricas
+                            Desglose de datos por docente
                         </p>
                     </div>
                 </div>
@@ -323,7 +321,7 @@ export default function VistaDetallada() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} size={16} />
                         <input
                             type="text"
-                            placeholder="Buscar docente o asignatura..."
+                            placeholder="Buscar docente..."
                             value={searchQuery}
                             onFocus={() => setIsSearchFocused(true)}
                             onChange={(e) => {

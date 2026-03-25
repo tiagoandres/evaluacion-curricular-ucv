@@ -22,6 +22,7 @@ export interface SurveyEntry {
   contenido_recursos13: string;
   contenido_recursos14: string;
   contenido_recursos15: string;
+  contenido_recursos16: string;
   evaluacion1: string;
   evaluacion2: string;
   evaluacion3: string;
@@ -51,6 +52,28 @@ export interface SurveyEntry {
   autoevaluacion7?: string;
   autoevaluacion8?: string;
   autoevaluacion9?: string;
+  // Desempeño Docente (individual questions)
+  desempenoDocente1?: string;
+  desempenoDocente2?: string;
+  desempenoDocente3?: string;
+  desempenoDocente4?: string;
+  desempenoDocente5?: string;
+  desempenoDocente6?: string;
+  desempenoDocente7?: string;
+  desempenoDocente8?: string;
+  desempenoDocente9?: string;
+  desempenoDocente10?: string;
+  // Desempeño Docente numérico (1-4)
+  desempenoDocente1Num?: number;
+  desempenoDocente2Num?: number;
+  desempenoDocente3Num?: number;
+  desempenoDocente4Num?: number;
+  desempenoDocente5Num?: number;
+  desempenoDocente6Num?: number;
+  desempenoDocente7Num?: number;
+  desempenoDocente8Num?: number;
+  desempenoDocente9Num?: number;
+  desempenoDocente10Num?: number;
 }
 
 export function mapSupabaseRowToSurveyEntry(row: any): SurveyEntry {
@@ -78,6 +101,7 @@ export function mapSupabaseRowToSurveyEntry(row: any): SurveyEntry {
     contenido_recursos13: row.contenido_recursos13 || '',
     contenido_recursos14: row.contenido_recursos14 || '',
     contenido_recursos15: row.contenido_recursos15 || '',
+    contenido_recursos16: row.contenido_recursos16 || '',
     evaluacion1: row.evaluacion1 || row.evaluacion_1 || row.Evaluacion1 || row.evaluación1 || row.evaluación_1 || '',
     evaluacion2: row.evaluacion2 || row.evaluacion_2 || row.Evaluacion2 || row.evaluación2 || row.evaluación_2 || '',
     evaluacion3: row.evaluacion3 || row.evaluacion_3 || row.Evaluacion3 || row.evaluación3 || row.evaluación_3 || '',
@@ -105,6 +129,26 @@ export function mapSupabaseRowToSurveyEntry(row: any): SurveyEntry {
     autoevaluacion7: row.autoevaluacion_estudiante7 || '',
     autoevaluacion8: row.autoevaluacion_estudiante8 || '',
     autoevaluacion9: row.autoevaluacion_estudiante9 || '',
+    desempenoDocente1: row['desempeño_docente1'] || row.desempeno_docente1 || '',
+    desempenoDocente2: row['desempeño_docente2'] || row.desempeno_docente2 || '',
+    desempenoDocente3: row['desempeño_docente3'] || row.desempeno_docente3 || '',
+    desempenoDocente4: row['desempeño_docente4'] || row.desempeno_docente4 || '',
+    desempenoDocente5: row['desempeño_docente5'] || row.desempeno_docente5 || '',
+    desempenoDocente6: row['desempeño_docente6'] || row.desempeno_docente6 || '',
+    desempenoDocente7: row['desempeño_docente7'] || row.desempeno_docente7 || '',
+    desempenoDocente8: row['desempeño_docente8'] || row.desempeno_docente8 || '',
+    desempenoDocente9: row['desempeño_docente9'] || row.desempeno_docente9 || '',
+    desempenoDocente10: row['desempeño_docente10'] || row.desempeno_docente10 || '',
+    desempenoDocente1Num: parseFloat(row['desempeño_docente1_num'] || row.desempeno_docente1_num) || undefined,
+    desempenoDocente2Num: parseFloat(row['desempeño_docente2_num'] || row.desempeno_docente2_num) || undefined,
+    desempenoDocente3Num: parseFloat(row['desempeño_docente3_num'] || row.desempeno_docente3_num) || undefined,
+    desempenoDocente4Num: parseFloat(row['desempeño_docente4_num'] || row.desempeno_docente4_num) || undefined,
+    desempenoDocente5Num: parseFloat(row['desempeño_docente5_num'] || row.desempeno_docente5_num) || undefined,
+    desempenoDocente6Num: parseFloat(row['desempeño_docente6_num'] || row.desempeno_docente6_num) || undefined,
+    desempenoDocente7Num: parseFloat(row['desempeño_docente7_num'] || row.desempeno_docente7_num) || undefined,
+    desempenoDocente8Num: parseFloat(row['desempeño_docente8_num'] || row.desempeno_docente8_num) || undefined,
+    desempenoDocente9Num: parseFloat(row['desempeño_docente9_num'] || row.desempeno_docente9_num) || undefined,
+    desempenoDocente10Num: parseFloat(row['desempeño_docente10_num'] || row.desempeno_docente10_num) || undefined,
   };
 }
 

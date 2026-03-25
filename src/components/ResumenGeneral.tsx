@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ClipboardList, Star, UserCheck, Filter, ChevronDown, X, LayoutDashboard } from 'lucide-react';
+import { ClipboardList, Star, UserCheck, Filter, ChevronDown, X, LayoutDashboard, Users } from 'lucide-react';
 import { mapSupabaseRowToSurveyEntry, SurveyEntry } from '@/data/mockData';
 import { supabase } from '@/lib/supabase';
 import {
@@ -19,7 +19,6 @@ import {
 } from '@/data/dataUtils';
 
 
-import KPICard from './KPICard';
 import RadarPerformanceChart from './charts/RadarPerformanceChart';
 import SatisfactionBarChart from './charts/SatisfactionBarChart';
 import TopCoursesTable from './TopCoursesTable';
@@ -215,30 +214,52 @@ export default function ResumenGeneral() {
                     <div className="w-8 h-8 rounded-full border-2 border-t-[#6366f1] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <KPICard
-                        title="Total Evaluaciones"
-                        value={totalEvaluaciones}
-                        subtitle="Respuestas registradas"
-                        icon={ClipboardList}
-                        color="#6366f1"
-                        delay={0}
-                    />
-                    <KPICard
-                        title="Utilidad Global"
-                        value={`${utilidadGlobal}/10`}
-                        subtitle="Promedio de utilidad percibida"
-                        icon={Star}
-                        color="#22d3ee"
-                        delay={0.1}
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }} className="glow-card p-6 rounded-3xl relative overflow-hidden flex flex-col justify-between" style={{ minHeight: '160px' }}>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                        <div className="flex items-center gap-3 mb-4 relative z-10">
+                             <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-500 shrink-0">
+                                <ClipboardList size={20} />
+                             </div>
+                             <span className="text-sm font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>MUESTRA TOTAL</span>
+                        </div>
+                        <div className="relative z-10">
+                            <div className="text-5xl font-black tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                                {totalEvaluaciones}
+                            </div>
+                            <div className="text-xs mt-2 font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                                Encuestas válidas procesadas
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="glow-card p-6 rounded-3xl relative overflow-hidden flex flex-col justify-between" style={{ minHeight: '160px' }}>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                        <div className="flex items-center gap-3 mb-4 relative z-10">
+                             <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-500 shrink-0">
+                                <Star size={20} />
+                             </div>
+                             <span className="text-sm font-bold tracking-wider" style={{ color: 'var(--text-muted)' }}>UTILIDAD GLOBAL</span>
+                        </div>
+                        <div className="relative z-10">
+                            <div className="flex items-end gap-2">
+                                <div className="text-5xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 to-blue-500">
+                                    {utilidadGlobal.toFixed(1)}
+                                </div>
+                                <div className="text-xl font-bold mb-1 opacity-50" style={{ color: 'var(--text-muted)' }}>/ 10</div>
+                            </div>
+                            <div className="text-xs mt-2 font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                                Promedio de utilidad percibida
+                            </div>
+                        </div>
+                    </motion.div>
                 </div>
             )}
 
             {/* Radar + Satisfaction Bar charts */}
             {!loading && (
                 <>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mt-2">
                         <RadarPerformanceChart data={radarData} />
                         <SatisfactionBarChart data={satisfactionData} isByAsignatura={isByAsignatura} />
                     </div>

@@ -36,8 +36,8 @@ export default function TopCoursesTable({ data }: Props) {
             className="glow-card p-6 rounded-2xl flex flex-col justify-between"
         >
             <div className="flex items-center gap-3 shrink-0 mb-4">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-amber-500/20 text-amber-600 shadow-sm transition-transform hover:scale-110">
-                    <Trophy size={20} />
+                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 shrink-0 transition-transform hover:scale-110">
+                    <Trophy size={18} />
                 </div>
                 <div>
                     <h4 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Top 5 Asignaturas</h4>

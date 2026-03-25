@@ -5,6 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import ResumenGeneral from '@/components/ResumenGeneral';
 import VistaDetallada from '@/components/VistaDetallada';
 import Asignaturas from '@/components/Asignaturas';
+import Docentes from '@/components/Docentes';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 
@@ -27,19 +28,17 @@ export default function Home() {
       if (!error && data && data.length > 0) {
         // Format date string (e.g. from "2026-08-03T14:47:28" to local format)
         try {
-          const dateStr = data[0].marca_temporal;
-          if (dateStr) {
-            let dateObj = new Date(dateStr);
+            const dateStr = data[0].marca_temporal;
+            if (dateStr) {
+              // El formato de la DB ahora es YYYY-MM-DD HH:MM:SS o similar
+              // Reemplazamos el espacio por 'T' para asegurar compatibilidad con ISO en todos los navegadores
+              const isoStr = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T');
+              let dateObj = new Date(isoStr);
 
-            // Convertir explícitamente de YYYY-DD-MM a YYYY-MM-DD para evitar el parsing invertido de Javascript
-            const match = dateStr.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})(.*)?$/);
-            if (match) {
-              const [, year, day, month, rest] = match;
-              let timeStr = (rest || '').trim();
-              if (timeStr && !timeStr.startsWith('T')) timeStr = `T${timeStr}`;
-
-              dateObj = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}${timeStr}`);
-            }
+              // Fallback en caso de que el parsing falle
+              if (isNaN(dateObj.getTime())) {
+                dateObj = new Date(dateStr);
+              }
 
             setLastUpdate(dateObj.toLocaleDateString('es-VE', {
               year: 'numeric',
@@ -106,8 +105,9 @@ export default function Home() {
 
         {/* Module content */}
         {activeModule === 'resumen' && <ResumenGeneral />}
-        {activeModule === 'vista-detallada' && <VistaDetallada />}
         {activeModule === 'asignaturas' && <Asignaturas />}
+        {activeModule === 'docentes' && <Docentes />}
+        {activeModule === 'vista-detallada' && <VistaDetallada />}
       </main>
     </div>
   );
