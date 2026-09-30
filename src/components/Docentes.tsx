@@ -9,7 +9,17 @@ import { supabase } from '@/lib/supabase';
 import { mapSupabaseRowToSurveyEntry, SurveyEntry } from '@/data/mockData';
 import ReportePDFDocente from './ReportePDFDocente'; // Assuming this component is in the same directory
 
-export default function Docentes() {
+interface DocentesProps {
+    filtroRol?: {
+        departamento?: string;
+        catedra?: string;
+        docente?: string;
+    };
+    asignaturaForzada?: string | null;
+    onSelectAsignatura?: (asig: string) => void;
+}
+
+export default function Docentes({ filtroRol, asignaturaForzada, onSelectAsignatura }: DocentesProps) {
     const [surveyData, setSurveyData] = useState<SurveyEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -17,9 +27,9 @@ export default function Docentes() {
     const [selectedDepartamento, setSelectedDepartamento] = useState<string | 'all'>('all');
     const [selectedCatedra, setSelectedCatedra] = useState<string | 'all'>('all');
     const [selectedAsignatura, setSelectedAsignatura] = useState<string | 'all'>('all');
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(filtroRol?.docente || '');
     const [isSearchFocused, setIsSearchFocused] = useState(false);
-    const [selectedTeacher, setSelectedTeacher] = useState<string | null>(null);
+    const [selectedTeacher, setSelectedTeacher] = useState<string | null>(filtroRol?.docente || null);
     const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
     const [availableTeachers, setAvailableTeachers] = useState<string[]>([]);
 
@@ -36,12 +46,69 @@ export default function Docentes() {
             if (error) {
                 console.error('Error fetching data:', error);
             } else if (data) {
-                setSurveyData(data.map(mapSupabaseRowToSurveyEntry));
+                const allEntries = data.map(mapSupabaseRowToSurveyEntry);
+                let mapped = allEntries;
+
+                // Si hay filtro de rol de docente (profesor)
+                if (filtroRol?.docente) {
+                    const teacherName = filtroRol.docente;
+                    const teacherEntries = allEntries.filter(d => d.docente === teacherName);
+
+                    setSelectedTeacher(teacherName);
+                    setSearchQuery(teacherName);
+
+                    const teacherDepts = Array.from(new Set(teacherEntries.map(d => d.departamento).filter(Boolean)));
+                    const teacherCats = Array.from(new Set(teacherEntries.map(d => d.catedra).filter(Boolean)));
+                    const teacherCiclos = Array.from(new Set(teacherEntries.map(d => d.ciclo).filter(Boolean)));
+
+                    if (filtroRol.departamento || teacherDepts[0]) {
+                        setSelectedDepartamento((filtroRol.departamento || teacherDepts[0]) as string);
+                    }
+                    if (filtroRol.catedra || teacherCats[0]) {
+                        setSelectedCatedra((filtroRol.catedra || teacherCats[0]) as string);
+                    }
+                    if (teacherCiclos[0]) {
+                        setSelectedCiclo(teacherCiclos[0]);
+                    }
+
+                    const teacherSubjs = Array.from(new Set(teacherEntries.map(d => d.asignatura).filter(Boolean))).sort();
+
+                    if (asignaturaForzada) {
+                        setSelectedAsignatura(asignaturaForzada);
+                    } else if (teacherSubjs.length === 1) {
+                        setSelectedAsignatura(teacherSubjs[0]);
+                    } else if (teacherSubjs.length > 1) {
+                        setAvailableSubjs(teacherSubjs);
+                        setIsSubjModalOpen(true);
+                    }
+
+                    // Para el profesor, sus datos base son todos sus registros
+                    mapped = teacherEntries;
+                } else {
+                    // Roles no profesor (directora, jefe dpto, jefe cátedra)
+                    if (filtroRol?.departamento) {
+                        setSelectedDepartamento(filtroRol.departamento);
+                        mapped = mapped.filter(d => d.departamento === filtroRol.departamento);
+                    }
+                    if (filtroRol?.catedra) {
+                        setSelectedCatedra(filtroRol.catedra);
+                        mapped = mapped.filter(d => d.catedra === filtroRol.catedra);
+                    }
+                }
+
+                setSurveyData(mapped);
             }
             setLoading(false);
         }
         fetchInfo();
-    }, []);
+    }, [filtroRol]);
+
+    // Sincronizar asignaturaForzada si cambia desde afuera
+    useEffect(() => {
+        if (asignaturaForzada) {
+            setSelectedAsignatura(asignaturaForzada);
+        }
+    }, [asignaturaForzada]);
 
     // Handle Search dropdown click outside
     useEffect(() => {
@@ -85,12 +152,21 @@ export default function Docentes() {
     }, [surveyData, selectedCiclo, selectedDepartamento, selectedCatedra]);
 
     const handleClearFilters = () => {
-        setSelectedCiclo('all');
-        setSelectedDepartamento('all');
-        setSelectedCatedra('all');
-        setSelectedAsignatura('all');
-        setSearchQuery('');
-        setSelectedTeacher(null);
+        if (filtroRol?.docente) {
+            setSelectedCiclo('all');
+            setSelectedDepartamento(filtroRol.departamento || 'all');
+            setSelectedCatedra(filtroRol.catedra || 'all');
+            setSelectedAsignatura(asignaturaForzada || 'all');
+            setSearchQuery(filtroRol.docente);
+            setSelectedTeacher(filtroRol.docente);
+        } else {
+            setSelectedCiclo('all');
+            setSelectedDepartamento(filtroRol?.departamento || 'all');
+            setSelectedCatedra(filtroRol?.catedra || 'all');
+            setSelectedAsignatura('all');
+            setSearchQuery('');
+            setSelectedTeacher(null);
+        }
     };
 
     const searchDropdownResults = useMemo(() => {
@@ -144,6 +220,9 @@ export default function Docentes() {
         setSelectedAsignatura(subj);
         setSearchQuery(selectedTeacher || '');
         setIsSubjModalOpen(false);
+        if (onSelectAsignatura) {
+            onSelectAsignatura(subj);
+        }
     };
 
     const [isContenidosModalOpen, setIsContenidosModalOpen] = useState(false);

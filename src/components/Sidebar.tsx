@@ -9,10 +9,14 @@ import {
     Users,
     BarChart3,
     FileText,
-    Table
+    Table,
+    LogOut,
+    ShieldCheck,
+    Crown,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from './ThemeToggle';
+import { useAuth } from './AuthProvider';
 
 interface NavItem {
     id: string;
@@ -30,12 +34,24 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ activeModule, onModuleChange, collapsed, onCollapse }: SidebarProps) {
-    const navItems: NavItem[] = [
+    const { perfil, modulosPermitidos, logout } = useAuth();
+
+    // Definir todos los items posibles
+    const allNavItems: NavItem[] = [
         { id: 'resumen', label: 'Resumen General', icon: <LayoutDashboard size={18} />, active: activeModule === 'resumen' },
         { id: 'asignaturas', label: 'Asignaturas', icon: <BookOpen size={18} />, active: activeModule === 'asignaturas' },
         { id: 'docentes', label: 'Docentes', icon: <Users size={18} />, active: activeModule === 'docentes' },
         { id: 'vista-detallada', label: 'Vista Detallada', icon: <Table size={18} />, active: activeModule === 'vista-detallada' },
+        { id: 'admin-usuarios', label: 'Administración', icon: <Crown size={18} />, active: activeModule === 'admin-usuarios' },
     ];
+
+    // Filtrar según permisos del rol
+    const navItems = allNavItems.filter(item => modulosPermitidos.includes(item.id));
+
+    const handleLogout = async () => {
+        await logout();
+        window.location.href = '/login';
+    };
 
     return (
         <motion.aside
@@ -75,6 +91,25 @@ export default function Sidebar({ activeModule, onModuleChange, collapsed, onCol
                     </motion.div>
                 )}
             </div>
+
+            {/* User info (when sidebar is open) */}
+            {perfil && !collapsed && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="px-5 py-3 border-b"
+                    style={{ borderColor: 'var(--border-primary)' }}
+                >
+                    <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                        {perfil.nombre_completo}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-wider font-semibold mt-0.5 flex items-center gap-1" style={{ color: 'var(--accent-primary)' }}>
+                        {perfil.rol === 'directora' && <Crown size={10} />}
+                        {perfil.rol === 'jefe_departamento' && <ShieldCheck size={10} />}
+                        {perfil.rol.replace('_', ' ')}
+                    </p>
+                </motion.div>
+            )}
 
             {/* Navigation */}
             <nav className={`flex-1 overflow-y-auto space-y-2 transition-all duration-300 ${collapsed ? 'py-5 px-3' : 'py-6 px-5'}`}>
@@ -140,6 +175,39 @@ export default function Sidebar({ activeModule, onModuleChange, collapsed, onCol
             <div className={`border-t space-y-3 transition-all duration-300 ${collapsed ? 'p-3' : 'p-4'}`} style={{ borderColor: 'var(--border-primary)' }}>
                 <ThemeToggle collapsed={collapsed} />
 
+                {/* Logout button */}
+                <button
+                    onClick={handleLogout}
+                    className={`w-full flex items-center rounded-xl text-sm transition-all duration-200 cursor-pointer ${collapsed ? 'justify-center py-2.5 px-0' : 'gap-2 px-3 py-2.5'
+                        }`}
+                    style={{
+                        color: 'var(--danger)',
+                        background: 'transparent',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                    }}
+                >
+                    <LogOut size={18} />
+                    <AnimatePresence>
+                        {!collapsed && (
+                            <motion.span
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="font-medium whitespace-nowrap"
+                            >
+                                Cerrar Sesión
+                            </motion.span>
+                        )}
+                    </AnimatePresence>
+                </button>
+
+                {/* Collapse button */}
                 <button
                     onClick={() => onCollapse(!collapsed)}
                     className={`w-full flex items-center rounded-xl text-sm transition-all duration-200 cursor-pointer ${collapsed ? 'justify-center py-2.5 px-0' : 'justify-center gap-2 px-3 py-2.5'

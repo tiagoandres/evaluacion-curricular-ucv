@@ -1,21 +1,36 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Sidebar from '@/components/Sidebar';
 import ResumenGeneral from '@/components/ResumenGeneral';
 import VistaDetallada from '@/components/VistaDetallada';
 import Asignaturas from '@/components/Asignaturas';
 import Docentes from '@/components/Docentes';
+import AdminUsuarios from '@/components/AdminUsuarios';
+import ModalSeleccionAsignatura from '@/components/ModalSeleccionAsignatura';
 import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/components/AuthProvider';
+import { useRouter } from 'next/navigation';
+import { obtenerAsignaturasDocente, cerrarSesion } from '@/lib/auth';
+import { RefreshCw } from 'lucide-react';
 
 export default function Home() {
+  const router = useRouter();
+  const { user, perfil, loading: authLoading, rol, modulosPermitidos, filtrosDatos, logout } = useAuth();
+
   const [activeModule, setActiveModule] = useState('resumen');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
 
-  React.useEffect(() => {
+  // Estado para profesores con múltiples asignaturas
+  const [asignaturasDocente, setAsignaturasDocente] = useState<string[]>([]);
+  const [asignaturaSeleccionada, setAsignaturaSeleccionada] = useState<string | null>(null);
+  const [showModalAsignatura, setShowModalAsignatura] = useState(false);
+  const [modalAsignaturaInicial, setModalAsignaturaInicial] = useState(true);
+
+  useEffect(() => {
     setMounted(true);
 
     async function fetchLastUpdate() {
@@ -56,10 +71,100 @@ export default function Home() {
     fetchLastUpdate();
   }, []);
 
-  if (!mounted) {
+  // Redirigir a login si no hay sesión
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [authLoading, user, router]);
+
+  // Cargar asignaturas del docente (para profesores regulares)
+  useEffect(() => {
+    if (perfil && perfil.rol === 'profesor') {
+      obtenerAsignaturasDocente(perfil.nombre_docente_bd).then((asigs) => {
+        setAsignaturasDocente(asigs);
+        if (asigs.length > 1) {
+          // Mostrar modal de selección al entrar a docentes
+          setShowModalAsignatura(true);
+          setModalAsignaturaInicial(true);
+        } else if (asigs.length === 1) {
+          setAsignaturaSeleccionada(asigs[0]);
+        }
+      });
+    }
+  }, [perfil]);
+
+  // Asegurar que activeModule siempre sea un módulo permitido para el rol del usuario
+  useEffect(() => {
+    if (perfil && modulosPermitidos.length > 0) {
+      if (!modulosPermitidos.includes(activeModule)) {
+        setActiveModule(modulosPermitidos[0]);
+      }
+    }
+  }, [perfil, modulosPermitidos, activeModule]);
+
+  // Cuando el profesor navega a docentes, mostrar el modal si tiene múltiples asignaturas
+  useEffect(() => {
+    if (activeModule === 'docentes' && perfil?.rol === 'profesor' && asignaturasDocente.length > 1 && !asignaturaSeleccionada) {
+      setShowModalAsignatura(true);
+      setModalAsignaturaInicial(true);
+    }
+  }, [activeModule, perfil, asignaturasDocente, asignaturaSeleccionada]);
+
+  const handleSelectAsignatura = useCallback((asignatura: string) => {
+    setAsignaturaSeleccionada(asignatura);
+    setShowModalAsignatura(false);
+    setModalAsignaturaInicial(false);
+  }, []);
+
+  const handleCambiarAsignatura = useCallback(() => {
+    setShowModalAsignatura(true);
+    setModalAsignaturaInicial(false);
+  }, []);
+
+  // Mientras carga auth o no hay perfil, mostrar spinner
+  if (!mounted || authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center grid-bg">
         <div className="w-8 h-8 rounded-full border-2 border-t-[#6366f1] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  // Si hay usuario pero no perfil (por ejemplo, registro borrado o no existe)
+  if (!perfil) {
+    return (
+      <div className="flex min-h-screen items-center justify-center grid-bg flex-col gap-4 p-4 text-center">
+        <div className="w-8 h-8 rounded-full border-2 border-t-[#6366f1] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          No se encontró un perfil asociado a esta cuenta.
+        </p>
+        <div className="flex items-center gap-3 mt-2">
+          <button
+            onClick={() => window.location.reload()}
+            className="text-xs px-4 py-2 rounded-lg cursor-pointer transition-colors"
+            style={{ color: 'var(--text-secondary)', background: 'var(--surface-card)', border: '1px solid var(--border-subtle)' }}
+          >
+            Reintentar
+          </button>
+          <button
+            onClick={async () => {
+              await logout();
+              window.location.href = '/login';
+            }}
+            className="text-xs px-4 py-2 rounded-lg cursor-pointer font-medium transition-colors"
+            style={{ color: '#fff', background: 'var(--accent-primary)', border: 'none' }}
+          >
+            Cerrar sesión e ir a Login
+          </button>
+          <a
+            href="/registro"
+            className="text-xs px-4 py-2 rounded-lg cursor-pointer font-medium transition-colors inline-block"
+            style={{ color: 'var(--accent-primary)', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}
+          >
+            Crear nueva cuenta
+          </a>
+        </div>
       </div>
     );
   }
@@ -98,17 +203,52 @@ export default function Home() {
               </span>
             </div>
           </div>
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            Escuela de Psicología · Universidad Central de Venezuela
-          </span>
+          <div className="flex items-center gap-4">
+            {/* Botón "Cambiar asignatura" para profesores con múltiples asignaturas */}
+            {perfil.rol === 'profesor' && asignaturasDocente.length > 1 && asignaturaSeleccionada && activeModule === 'docentes' && (
+              <button
+                onClick={handleCambiarAsignatura}
+                className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+                style={{
+                  color: 'var(--accent-primary)',
+                  background: 'rgba(99,102,241,0.08)',
+                  border: '1px solid rgba(99,102,241,0.2)',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.15)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(99,102,241,0.08)'; }}
+              >
+                <RefreshCw size={12} />
+                Cambiar asignatura
+              </button>
+            )}
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              Escuela de Psicología · Universidad Central de Venezuela
+            </span>
+          </div>
         </motion.div>
 
-        {/* Module content */}
-        {activeModule === 'resumen' && <ResumenGeneral />}
-        {activeModule === 'asignaturas' && <Asignaturas />}
-        {activeModule === 'docentes' && <Docentes />}
-        {activeModule === 'vista-detallada' && <VistaDetallada />}
+        {/* Module content - con filtros según rol */}
+        {activeModule === 'resumen' && modulosPermitidos.includes('resumen') && <ResumenGeneral />}
+        {activeModule === 'asignaturas' && modulosPermitidos.includes('asignaturas') && <Asignaturas filtroRol={filtrosDatos} />}
+        {activeModule === 'docentes' && modulosPermitidos.includes('docentes') && (
+          <Docentes
+            filtroRol={filtrosDatos}
+            asignaturaForzada={perfil.rol === 'profesor' ? asignaturaSeleccionada : undefined}
+            onSelectAsignatura={handleSelectAsignatura}
+          />
+        )}
+        {activeModule === 'vista-detallada' && modulosPermitidos.includes('vista-detallada') && <VistaDetallada />}
+        {activeModule === 'admin-usuarios' && modulosPermitidos.includes('admin-usuarios') && <AdminUsuarios />}
       </main>
+
+      {/* Modal de selección de asignatura para profesores */}
+      <ModalSeleccionAsignatura
+        isOpen={showModalAsignatura && activeModule === 'docentes'}
+        asignaturas={asignaturasDocente}
+        onSelect={handleSelectAsignatura}
+        onClose={() => setShowModalAsignatura(false)}
+        forzarSeleccion={modalAsignaturaInicial && !asignaturaSeleccionada}
+      />
     </div>
   );
 }

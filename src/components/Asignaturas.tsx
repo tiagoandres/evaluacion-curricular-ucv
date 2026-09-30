@@ -10,7 +10,15 @@ import ReportePDF from './ReportePDF';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
-export default function Asignaturas() {
+interface AsignaturasProps {
+    filtroRol?: {
+        departamento?: string;
+        catedra?: string;
+        docente?: string;
+    };
+}
+
+export default function Asignaturas({ filtroRol }: AsignaturasProps) {
     const [surveyData, setSurveyData] = useState<SurveyEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -40,12 +48,32 @@ export default function Asignaturas() {
             if (error) {
                 console.error('Error fetching data:', error);
             } else if (data) {
-                setSurveyData(data.map(mapSupabaseRowToSurveyEntry));
+                let mapped = data.map(mapSupabaseRowToSurveyEntry);
+
+                // Aplicar filtros de rol
+                if (filtroRol?.departamento) {
+                    mapped = mapped.filter(d => d.departamento === filtroRol.departamento);
+                    setSelectedDepartamento(filtroRol.departamento);
+                }
+                if (filtroRol?.catedra) {
+                    mapped = mapped.filter(d => d.catedra === filtroRol.catedra);
+                    setSelectedCatedra(filtroRol.catedra);
+                }
+                if (filtroRol?.docente) {
+                    mapped = mapped.filter(d => d.docente === filtroRol.docente);
+                    const distinctAsigs = Array.from(new Set(mapped.map(d => d.asignatura).filter(Boolean)));
+                    if (distinctAsigs.length === 1) {
+                        setSelectedAsignatura(distinctAsigs[0]);
+                        setSearchQuery(distinctAsigs[0]);
+                    }
+                }
+
+                setSurveyData(mapped);
             }
             setLoading(false);
         }
         fetchInfo();
-    }, []);
+    }, [filtroRol]);
 
     // Derived unique options subject to prior filters
     const ciclos = useMemo(() => {
