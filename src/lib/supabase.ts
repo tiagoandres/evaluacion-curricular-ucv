@@ -7,4 +7,10 @@ if (!supabaseUrl || !supabaseKey) {
     console.error("Supabase URL or Anon Key is missing. Check your .env.local file.");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+    },
+});

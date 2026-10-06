@@ -65,24 +65,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Escuchar cambios de autenticación
     useEffect(() => {
-        // Obtener sesión actual
-        supabase.auth.getSession().then(({ data: { session: s } }) => {
-            setSession(s);
-            setUser(s?.user ?? null);
-            if (s?.user) {
-                cargarPerfil(s.user.id).finally(() => setLoading(false));
-            } else {
+        let isMounted = true;
+
+        // Fallback de seguridad: NUNCA dejar el estado en loading por más de 3.5 segundos
+        const safetyTimer = setTimeout(() => {
+            if (isMounted) {
+                console.warn('Auth check safety timeout triggered. Ensuring app unlocks.');
                 setLoading(false);
             }
-        });
+        }, 3500);
 
-        // Suscribirse a cambios de auth
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (_event, s) => {
+        // Obtener sesión actual
+        supabase.auth.getSession()
+            .then(async ({ data: { session: s }, error }) => {
+                if (!isMounted) return;
+                if (error) {
+                    console.error('Error al obtener sesión:', error);
+                    setLoading(false);
+                    return;
+                }
                 setSession(s);
                 setUser(s?.user ?? null);
                 if (s?.user) {
-                    await cargarPerfil(s.user.id);
+                    try {
+                        const p = await obtenerPerfilUsuario(s.user.id);
+                        if (isMounted) setPerfil(p);
+                    } catch (e) {
+                        console.error('Error al cargar perfil inicial:', e);
+                    } finally {
+                        if (isMounted) setLoading(false);
+                    }
+                } else {
+                    setLoading(false);
+                }
+            })
+            .catch((err) => {
+                console.error('Error inesperado en getSession:', err);
+                if (isMounted) setLoading(false);
+            });
+
+        // Suscribirse a cambios de auth posteriores (no bloqueante)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            (_event, s) => {
+                if (!isMounted) return;
+                setSession(s);
+                setUser(s?.user ?? null);
+                if (s?.user) {
+                    obtenerPerfilUsuario(s.user.id)
+                        .then((p) => {
+                            if (isMounted) setPerfil(p);
+                        })
+                        .catch((err) => {
+                            console.error('Error al cargar perfil en cambio de sesión:', err);
+                        });
                 } else {
                     setPerfil(null);
                 }
@@ -90,16 +125,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
 
         return () => {
+            isMounted = false;
+            clearTimeout(safetyTimer);
             subscription.unsubscribe();
         };
-    }, [cargarPerfil]);
+    }, []);
 
     // Logout
     const logout = useCallback(async () => {
-        await cerrarSesion();
-        setPerfil(null);
-        setUser(null);
-        setSession(null);
+        try {
+            await cerrarSesion();
+        } catch (e) {
+            console.error('Error cerrando sesión:', e);
+        } finally {
+            setPerfil(null);
+            setUser(null);
+            setSession(null);
+        }
     }, []);
 
     // Rol y permisos derivados

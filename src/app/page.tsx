@@ -74,7 +74,7 @@ export default function Home() {
   // Redirigir a login si no hay sesión
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login');
+      router.replace('/login');
     }
   }, [authLoading, user, router]);
 
@@ -122,11 +122,33 @@ export default function Home() {
     setModalAsignaturaInicial(false);
   }, []);
 
-  // Mientras carga auth o no hay perfil, mostrar spinner
+  // Mientras carga autenticación inicial
   if (!mounted || authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center grid-bg">
+      <div className="flex min-h-screen items-center justify-center grid-bg flex-col gap-3">
         <div className="w-8 h-8 rounded-full border-2 border-t-[#6366f1] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          Cargando sesión...
+        </p>
+      </div>
+    );
+  }
+
+  // Si no hay usuario autenticado (redirigiendo a login)
+  if (!user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center grid-bg flex-col gap-3">
+        <div className="w-8 h-8 rounded-full border-2 border-t-[#6366f1] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          Redirigiendo a inicio de sesión...
+        </p>
+        <a
+          href="/login"
+          className="text-xs transition-colors hover:underline mt-1"
+          style={{ color: 'var(--accent-primary)' }}
+        >
+          Haga clic aquí si no es redirigido automáticamente
+        </a>
       </div>
     );
   }
