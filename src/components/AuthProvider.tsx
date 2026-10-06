@@ -152,9 +152,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const filtrosDatos = React.useMemo(() => {
         if (!perfil) return {};
 
+        if (perfil.rol === 'directora') {
+            return {}; // Sin filtros - ve todo
+        }
+
+        // Si es jefe de departamento Y jefe de cátedra a la vez
+        if (perfil.es_jefe_departamento && perfil.es_jefe_catedra) {
+            return { departamento: perfil.departamento, catedra: perfil.catedra };
+        }
+
         switch (perfil.rol) {
-            case 'directora':
-                return {}; // Sin filtros - ve todo
             case 'jefe_departamento':
                 return { departamento: perfil.departamento };
             case 'jefe_catedra':

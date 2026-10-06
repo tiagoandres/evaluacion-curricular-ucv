@@ -259,7 +259,7 @@ export default function Home() {
             onSelectAsignatura={handleSelectAsignatura}
           />
         )}
-        {activeModule === 'vista-detallada' && modulosPermitidos.includes('vista-detallada') && <VistaDetallada />}
+        {activeModule === 'vista-detallada' && modulosPermitidos.includes('vista-detallada') && <VistaDetallada filtroRol={filtrosDatos} />}
         {activeModule === 'admin-usuarios' && modulosPermitidos.includes('admin-usuarios') && <AdminUsuarios />}
       </main>
 

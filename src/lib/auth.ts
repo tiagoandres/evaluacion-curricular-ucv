@@ -24,8 +24,8 @@ export interface RegistroFormData {
     nombre_completo: string;
     nombre_docente_bd: string;
     email_recuperacion: string;
-    departamento: string;
-    catedra: string;
+    departamento?: string;
+    catedra?: string;
     es_jefe_catedra: boolean;
     es_jefe_departamento: boolean;
     password: string;
@@ -154,6 +154,81 @@ export function buscarDocentesSimilares(input: string, docentes: string[], limit
         .map(s => s.docente);
 }
 
+/**
+ * Obtiene el departamento y cátedra evaluados para un docente (el primer registro encontrado).
+ */
+export async function obtenerDeptoCatedraDocente(nombreDocente: string): Promise<{ departamento: string; catedra: string }> {
+    const { data, error } = await supabase
+        .from('datos_limpios')
+        .select('departamento_evaluado, catedra_evaluada')
+        .eq('docente_evaluado', nombreDocente)
+        .limit(1);
+
+    if (error || !data || data.length === 0) {
+        return { departamento: '', catedra: '' };
+    }
+
+    return {
+        departamento: data[0].departamento_evaluado || '',
+        catedra: data[0].catedra_evaluada || '',
+    };
+}
+
+/**
+ * Obtiene el departamento al que pertenece una cátedra (el primer registro).
+ */
+export async function obtenerDepartamentoDeCatedra(catedra: string): Promise<string> {
+    const { data, error } = await supabase
+        .from('datos_limpios')
+        .select('departamento_evaluado')
+        .eq('catedra_evaluada', catedra)
+        .limit(1);
+
+    if (error || !data || data.length === 0) {
+        return '';
+    }
+
+    return data[0].departamento_evaluado || '';
+}
+
+/**
+ * Obtiene los departamentos de datos_limpios que aún no tienen un jefe de departamento registrado en usuarios.
+ */
+export async function obtenerDepartamentosSinJefe(): Promise<string[]> {
+    const todosDeptos = await obtenerDepartamentosUnicos();
+    const { data: jefes, error } = await supabase
+        .from('usuarios')
+        .select('departamento')
+        .eq('es_jefe_departamento', true);
+
+    if (error) {
+        console.error('Error fetching jefes de departamento:', error);
+        return todosDeptos;
+    }
+
+    const deptosConJefe = new Set((jefes || []).map(j => j.departamento).filter(Boolean));
+    return todosDeptos.filter(d => !deptosConJefe.has(d));
+}
+
+/**
+ * Obtiene las cátedras de datos_limpios que aún no tienen un jefe de cátedra registrado en usuarios.
+ */
+export async function obtenerCatedrasSinJefe(): Promise<string[]> {
+    const todasCatedras = await obtenerCatedrasUnicas();
+    const { data: jefes, error } = await supabase
+        .from('usuarios')
+        .select('catedra')
+        .eq('es_jefe_catedra', true);
+
+    if (error) {
+        console.error('Error fetching jefes de catedra:', error);
+        return todasCatedras;
+    }
+
+    const catedrasConJefe = new Set((jefes || []).map(j => j.catedra).filter(Boolean));
+    return todasCatedras.filter(c => !catedrasConJefe.has(c));
+}
+
 // ============================================================
 // FUNCIONES DE AUTENTICACIÓN
 // ============================================================
@@ -198,6 +273,53 @@ export async function registrarUsuario(formData: RegistroFormData): Promise<{
             return { success: false, error: 'Este docente ya tiene una cuenta registrada.' };
         }
 
+        // Resolver departamento y cátedra automáticamente si no se proporcionaron
+        let departamentoFinal = formData.departamento || '';
+        let catedraFinal = formData.catedra || '';
+
+        if (!departamentoFinal || !catedraFinal) {
+            const deptoCatAuto = await obtenerDeptoCatedraDocente(formData.nombre_docente_bd);
+            if (!departamentoFinal) {
+                if (catedraFinal) {
+                    const deptoDeCat = await obtenerDepartamentoDeCatedra(catedraFinal);
+                    departamentoFinal = deptoDeCat || deptoCatAuto.departamento;
+                } else {
+                    departamentoFinal = deptoCatAuto.departamento;
+                }
+            }
+            if (!catedraFinal) {
+                catedraFinal = deptoCatAuto.catedra;
+            }
+        }
+
+        // Si se registra como jefe de departamento, validar que el departamento no tenga jefe ya registrado
+        if (formData.es_jefe_departamento && departamentoFinal) {
+            const { data: jefeExistente } = await supabase
+                .from('usuarios')
+                .select('id')
+                .eq('departamento', departamentoFinal)
+                .eq('es_jefe_departamento', true)
+                .maybeSingle();
+
+            if (jefeExistente) {
+                return { success: false, error: `Ya existe un jefe registrado para el departamento "${departamentoFinal}".` };
+            }
+        }
+
+        // Si se registra como jefe de cátedra, validar que la cátedra no tenga jefe ya registrado
+        if (formData.es_jefe_catedra && catedraFinal) {
+            const { data: jefeExistente } = await supabase
+                .from('usuarios')
+                .select('id')
+                .eq('catedra', catedraFinal)
+                .eq('es_jefe_catedra', true)
+                .maybeSingle();
+
+            if (jefeExistente) {
+                return { success: false, error: `Ya existe un jefe registrado para la cátedra "${catedraFinal}".` };
+            }
+        }
+
         // Limpiar cualquier sesión anterior colgada
         await supabase.auth.signOut();
 
@@ -235,8 +357,8 @@ export async function registrarUsuario(formData: RegistroFormData): Promise<{
             nombre_normalizado: normalizarNombre(formData.nombre_completo),
             nombre_docente_bd: formData.nombre_docente_bd,
             email_recuperacion: formData.email_recuperacion,
-            departamento: formData.departamento,
-            catedra: formData.catedra,
+            departamento: departamentoFinal,
+            catedra: catedraFinal,
             rol: rol,
             es_jefe_catedra: esDirectora ? true : formData.es_jefe_catedra,
             es_jefe_departamento: esDirectora ? true : formData.es_jefe_departamento,
@@ -363,9 +485,9 @@ export function obtenerModulosPermitidos(rol: UserRole): string[] {
         case 'directora':
             return ['resumen', 'asignaturas', 'docentes', 'vista-detallada', 'admin-usuarios'];
         case 'jefe_departamento':
-            return ['asignaturas', 'docentes'];
+            return ['asignaturas', 'docentes', 'vista-detallada'];
         case 'jefe_catedra':
-            return ['asignaturas', 'docentes'];
+            return ['asignaturas', 'docentes', 'vista-detallada'];
         case 'profesor':
             return ['docentes'];
         default:

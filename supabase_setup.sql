@@ -43,17 +43,11 @@ AS $$
   );
 $$;
 
--- Los usuarios pueden leer su propio registro
-CREATE POLICY "Usuarios pueden leer su propio perfil"
+-- Permitir lectura de usuarios para verificar cuentas existentes y jefaturas asignadas en el registro
+CREATE POLICY "Permitir lectura para verificación de registros"
     ON public.usuarios
     FOR SELECT
-    USING (auth.uid() = id);
-
--- La directora puede leer todos los registros
-CREATE POLICY "Directora puede leer todos los usuarios"
-    ON public.usuarios
-    FOR SELECT
-    USING (public.es_directora());
+    USING (true);
 
 -- Los usuarios pueden actualizar su propio registro
 CREATE POLICY "Usuarios pueden actualizar su perfil"
@@ -95,4 +89,8 @@ CREATE POLICY "Usuarios pueden crear su propio perfil"
 --   y ajusta según tus necesidades.
 -- - La tabla `usuarios` usa el id de auth.users como PK para
 --   mantener la referencia directa con Supabase Auth.
+-- - 'departamento' y 'catedra' son NOT NULL en la tabla, pero en el
+--   registro de profesores regulares se auto-rellenan desde 'datos_limpios'
+--   (primer registro evaluado del docente) a través de auth.ts.
+--   Para jefes de departamento o cátedra, se asigna la opción seleccionada.
 -- ============================================================

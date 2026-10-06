@@ -5,16 +5,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Eye, EyeOff, UserPlus, KeyRound, Mail, User,
     Building2, BookOpen, Shield, ShieldCheck, Check,
-    X, ChevronDown, Search, ArrowLeft, Loader2, AlertCircle
+    Search, ArrowLeft, AlertCircle, X
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
     registrarUsuario,
     obtenerDocentesUnicos,
-    obtenerDepartamentosUnicos,
-    obtenerCatedrasUnicas,
+    obtenerDepartamentosSinJefe,
+    obtenerCatedrasSinJefe,
+    obtenerAsignaturasDocente,
     buscarDocentesSimilares,
-    normalizarNombre,
 } from '@/lib/auth';
 
 export default function RegistroPage() {
@@ -40,35 +40,42 @@ export default function RegistroPage() {
 
     // Data state
     const [docentes, setDocentes] = useState<string[]>([]);
-    const [departamentos, setDepartamentos] = useState<string[]>([]);
-    const [catedras, setCatedras] = useState<string[]>([]);
+    const [departamentosDisponibles, setDepartamentosDisponibles] = useState<string[]>([]);
+    const [catedrasDisponibles, setCatedrasDisponibles] = useState<string[]>([]);
     const [sugerenciasDocentes, setSugerenciasDocentes] = useState<string[]>([]);
     const [showSugerencias, setShowSugerencias] = useState(false);
+    const [asignaturasDocente, setAsignaturasDocente] = useState<string[]>([]);
+    const [loadingAsignaturas, setLoadingAsignaturas] = useState(false);
 
     const sugerenciasRef = useRef<HTMLDivElement>(null);
 
-    // Load initial data
+    // Load initial data (docentes y opciones sin jefe)
     useEffect(() => {
         async function loadData() {
-            const [docs, deps] = await Promise.all([
+            const [docs, deps, cats] = await Promise.all([
                 obtenerDocentesUnicos(),
-                obtenerDepartamentosUnicos(),
+                obtenerDepartamentosSinJefe(),
+                obtenerCatedrasSinJefe(),
             ]);
             setDocentes(docs);
-            setDepartamentos(deps);
+            setDepartamentosDisponibles(deps);
+            setCatedrasDisponibles(cats);
         }
         loadData();
     }, []);
 
-    // Load cátedras when departamento changes
+    // Cargar asignaturas evaluadas cuando se selecciona un docente
     useEffect(() => {
-        if (departamento) {
-            obtenerCatedrasUnicas(departamento).then(setCatedras);
+        if (nombreDocenteBd) {
+            setLoadingAsignaturas(true);
+            obtenerAsignaturasDocente(nombreDocenteBd)
+                .then((asigs) => setAsignaturasDocente(asigs))
+                .catch((err) => console.error('Error fetching asignaturas:', err))
+                .finally(() => setLoadingAsignaturas(false));
         } else {
-            setCatedras([]);
+            setAsignaturasDocente([]);
         }
-        setCatedra('');
-    }, [departamento]);
+    }, [nombreDocenteBd]);
 
     // Fuzzy search docentes
     useEffect(() => {
@@ -103,11 +110,15 @@ export default function RegistroPage() {
     const passwordsMatch = password.length > 0 && password === passwordConfirm;
     const passwordLongEnough = password.length >= 6;
     const nombreValido = nombreDocenteBd.length > 0;
+    const emailValido = emailRecuperacion.trim().length > 0;
+    const deptoValido = !esJefeDepartamento || departamento.trim().length > 0;
+    const catedraValida = !esJefeCatedra || catedra.trim().length > 0;
+
     const formValido =
         nombreValido &&
-        emailRecuperacion.length > 0 &&
-        departamento.length > 0 &&
-        catedra.length > 0 &&
+        emailValido &&
+        deptoValido &&
+        catedraValida &&
         passwordsMatch &&
         passwordLongEnough;
 
@@ -127,9 +138,9 @@ export default function RegistroPage() {
         const result = await registrarUsuario({
             nombre_completo: nombreInput,
             nombre_docente_bd: nombreDocenteBd,
-            email_recuperacion: emailRecuperacion,
-            departamento,
-            catedra,
+            email_recuperacion: emailRecuperacion.trim(),
+            departamento: esJefeDepartamento ? departamento : undefined,
+            catedra: esJefeCatedra ? catedra : undefined,
             es_jefe_catedra: esJefeCatedra,
             es_jefe_departamento: esJefeDepartamento,
             password,
@@ -243,14 +254,14 @@ export default function RegistroPage() {
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-5">
-                        {/* 1. Nombre con autocompletado */}
+                        {/* 1. Nombre y Apellido con autocompletado y asignaturas */}
                         <div ref={sugerenciasRef} className="relative">
                             <label
                                 htmlFor="reg-nombre"
                                 className="block text-xs font-semibold uppercase tracking-wider mb-2"
                                 style={{ color: 'var(--text-muted)' }}
                             >
-                                Nombre completo
+                                Nombre y Apellido
                             </label>
                             <div className="relative">
                                 <User
@@ -265,12 +276,13 @@ export default function RegistroPage() {
                                     onChange={(e) => {
                                         setNombreInput(e.target.value);
                                         setNombreDocenteBd(''); // Reset match
+                                        setAsignaturasDocente([]);
                                     }}
                                     onFocus={() => {
                                         if (sugerenciasDocentes.length > 0) setShowSugerencias(true);
                                     }}
                                     required
-                                    placeholder="Escriba su nombre como aparece en los registros"
+                                    placeholder="Escriba su nombre y apellido"
                                     className="w-full pl-10 pr-10 py-3 rounded-xl text-sm transition-all duration-200 outline-none"
                                     style={inputStyle}
                                     autoComplete="off"
@@ -325,149 +337,236 @@ export default function RegistroPage() {
                                 </p>
                             )}
                             {nombreDocenteBd && (
-                                <p className="text-xs mt-1.5 flex items-center gap-1" style={{ color: 'var(--success)' }}>
-                                    <Check size={12} />
-                                    Docente encontrado: {nombreDocenteBd}
-                                </p>
+                                <div className="mt-2 space-y-2">
+                                    <p className="text-xs flex items-center gap-1 font-medium" style={{ color: 'var(--success)' }}>
+                                        <Check size={12} />
+                                        Docente encontrado: {nombreDocenteBd}
+                                    </p>
+
+                                    {/* Burbujas informativas de asignaturas evaluadas */}
+                                    {loadingAsignaturas ? (
+                                        <div className="flex items-center gap-2 text-xs py-1" style={{ color: 'var(--text-muted)' }}>
+                                            <div className="w-3.5 h-3.5 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+                                            Cargando asignaturas evaluadas...
+                                        </div>
+                                    ) : asignaturasDocente.length > 0 ? (
+                                        <div
+                                            className="p-3 rounded-xl border"
+                                            style={{
+                                                background: 'rgba(99, 102, 241, 0.05)',
+                                                borderColor: 'rgba(99, 102, 241, 0.18)',
+                                            }}
+                                        >
+                                            <div className="flex items-center gap-1.5 mb-2 text-xs font-semibold" style={{ color: 'var(--accent-primary)' }}>
+                                                <BookOpen size={13} />
+                                                <span>Asignatura(s) en la(s) que fue evaluado:</span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {asignaturasDocente.map((asig, idx) => (
+                                                    <span
+                                                        key={idx}
+                                                        className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium"
+                                                        style={{
+                                                            background: 'rgba(99, 102, 241, 0.1)',
+                                                            color: 'var(--text-primary)',
+                                                            border: '1px solid rgba(99, 102, 241, 0.2)',
+                                                        }}
+                                                    >
+                                                        {asig}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : null}
+                                </div>
                             )}
                         </div>
 
-                        {/* 2. Departamento */}
-                        <div>
-                            <label
-                                htmlFor="reg-departamento"
-                                className="block text-xs font-semibold uppercase tracking-wider mb-2"
-                                style={{ color: 'var(--text-muted)' }}
-                            >
-                                Departamento
-                            </label>
-                            <div className="relative">
-                                <Building2
-                                    size={16}
-                                    className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                                    style={{ color: 'var(--text-muted)' }}
-                                />
-                                <select
-                                    id="reg-departamento"
-                                    value={departamento}
-                                    onChange={(e) => setDepartamento(e.target.value)}
-                                    required
-                                    className="w-full pl-10 pr-8 py-3 rounded-xl text-sm transition-all duration-200 outline-none cursor-pointer"
-                                    style={inputStyle}
-                                    {...focusHandlers}
-                                >
-                                    <option value="">Seleccione su departamento</option>
-                                    {departamentos.map((d) => (
-                                        <option key={d} value={d}>{d}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* 3. Cátedra */}
-                        <div>
-                            <label
-                                htmlFor="reg-catedra"
-                                className="block text-xs font-semibold uppercase tracking-wider mb-2"
-                                style={{ color: 'var(--text-muted)' }}
-                            >
-                                Cátedra
-                            </label>
-                            <div className="relative">
-                                <BookOpen
-                                    size={16}
-                                    className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                                    style={{ color: 'var(--text-muted)' }}
-                                />
-                                <select
-                                    id="reg-catedra"
-                                    value={catedra}
-                                    onChange={(e) => setCatedra(e.target.value)}
-                                    required
-                                    disabled={!departamento}
-                                    className="w-full pl-10 pr-8 py-3 rounded-xl text-sm transition-all duration-200 outline-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                    style={inputStyle}
-                                    {...focusHandlers}
-                                >
-                                    <option value="">{departamento ? 'Seleccione su cátedra' : 'Primero seleccione un departamento'}</option>
-                                    {catedras.map((c) => (
-                                        <option key={c} value={c}>{c}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* 4 & 5. Checkboxes de Jefe */}
-                        <div className="space-y-3">
+                        {/* Roles adicionales con dropdowns condicionales */}
+                        <div className="space-y-3 pt-1">
                             <label className="block text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
                                 Roles adicionales
                             </label>
 
-                            <label
-                                className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200"
-                                style={{
-                                    background: esJefeDepartamento ? 'rgba(99,102,241,0.08)' : 'transparent',
-                                    border: `1px solid ${esJefeDepartamento ? 'var(--accent-primary)' : 'var(--border-primary)'}`,
-                                }}
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={esJefeDepartamento}
-                                    onChange={(e) => setEsJefeDepartamento(e.target.checked)}
-                                    className="sr-only"
-                                />
-                                <div
-                                    className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-all"
+                            {/* Checkbox y dropdown para Jefe de Departamento */}
+                            <div className="space-y-2">
+                                <label
+                                    className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200"
                                     style={{
-                                        background: esJefeDepartamento ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                                        border: esJefeDepartamento ? 'none' : '1px solid var(--border-primary)',
+                                        background: esJefeDepartamento ? 'rgba(99,102,241,0.08)' : 'transparent',
+                                        border: `1px solid ${esJefeDepartamento ? 'var(--accent-primary)' : 'var(--border-primary)'}`,
                                     }}
                                 >
-                                    {esJefeDepartamento && <Check size={13} color="#fff" />}
-                                </div>
-                                <div>
-                                    <div className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
-                                        <ShieldCheck size={14} style={{ color: 'var(--accent-primary)' }} />
-                                        Soy jefe de departamento
+                                    <input
+                                        type="checkbox"
+                                        checked={esJefeDepartamento}
+                                        onChange={(e) => {
+                                            const val = e.target.checked;
+                                            setEsJefeDepartamento(val);
+                                            if (!val) setDepartamento('');
+                                        }}
+                                        className="sr-only"
+                                    />
+                                    <div
+                                        className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-all"
+                                        style={{
+                                            background: esJefeDepartamento ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                                            border: esJefeDepartamento ? 'none' : '1px solid var(--border-primary)',
+                                        }}
+                                    >
+                                        {esJefeDepartamento && <Check size={13} color="#fff" />}
                                     </div>
-                                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                                        Podrá ver evaluaciones de todo su departamento
-                                    </span>
-                                </div>
-                            </label>
+                                    <div>
+                                        <div className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
+                                            <ShieldCheck size={14} style={{ color: 'var(--accent-primary)' }} />
+                                            Soy jefe de departamento
+                                        </div>
+                                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                                            Podrá ver evaluaciones y vista detallada de todo su departamento
+                                        </span>
+                                    </div>
+                                </label>
 
-                            <label
-                                className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200"
-                                style={{
-                                    background: esJefeCatedra ? 'rgba(99,102,241,0.08)' : 'transparent',
-                                    border: `1px solid ${esJefeCatedra ? 'var(--accent-primary)' : 'var(--border-primary)'}`,
-                                }}
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={esJefeCatedra}
-                                    onChange={(e) => setEsJefeCatedra(e.target.checked)}
-                                    className="sr-only"
-                                />
-                                <div
-                                    className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-all"
+                                <AnimatePresence>
+                                    {esJefeDepartamento && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="overflow-hidden pl-3 pr-1 pt-1 pb-1"
+                                        >
+                                            <label
+                                                htmlFor="reg-jefe-depto"
+                                                className="block text-xs font-semibold uppercase tracking-wider mb-2"
+                                                style={{ color: 'var(--text-muted)' }}
+                                            >
+                                                Departamento
+                                            </label>
+                                            <div className="relative">
+                                                <Building2
+                                                    size={16}
+                                                    className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                                                    style={{ color: 'var(--text-muted)' }}
+                                                />
+                                                <select
+                                                    id="reg-jefe-depto"
+                                                    value={departamento}
+                                                    onChange={(e) => setDepartamento(e.target.value)}
+                                                    required={esJefeDepartamento}
+                                                    disabled={departamentosDisponibles.length === 0}
+                                                    className="w-full pl-10 pr-8 py-3 rounded-xl text-sm transition-all duration-200 outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    style={inputStyle}
+                                                    {...focusHandlers}
+                                                >
+                                                    <option value="">
+                                                        {departamentosDisponibles.length > 0 ? 'Seleccione su departamento' : 'Todos los departamentos ya tienen un jefe asignado'}
+                                                    </option>
+                                                    {departamentosDisponibles.map((d) => (
+                                                        <option key={d} value={d}>{d}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            {departamentosDisponibles.length === 0 && (
+                                                <p className="text-xs mt-1.5 flex items-center gap-1" style={{ color: 'var(--warning)' }}>
+                                                    <AlertCircle size={12} />
+                                                    Todos los departamentos ya tienen un jefe asignado en el sistema.
+                                                </p>
+                                            )}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
+                            {/* Checkbox y dropdown para Jefe de Cátedra */}
+                            <div className="space-y-2">
+                                <label
+                                    className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200"
                                     style={{
-                                        background: esJefeCatedra ? 'var(--accent-primary)' : 'var(--bg-secondary)',
-                                        border: esJefeCatedra ? 'none' : '1px solid var(--border-primary)',
+                                        background: esJefeCatedra ? 'rgba(99,102,241,0.08)' : 'transparent',
+                                        border: `1px solid ${esJefeCatedra ? 'var(--accent-primary)' : 'var(--border-primary)'}`,
                                     }}
                                 >
-                                    {esJefeCatedra && <Check size={13} color="#fff" />}
-                                </div>
-                                <div>
-                                    <div className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
-                                        <Shield size={14} style={{ color: 'var(--purple-accent)' }} />
-                                        Soy jefe de cátedra
+                                    <input
+                                        type="checkbox"
+                                        checked={esJefeCatedra}
+                                        onChange={(e) => {
+                                            const val = e.target.checked;
+                                            setEsJefeCatedra(val);
+                                            if (!val) setCatedra('');
+                                        }}
+                                        className="sr-only"
+                                    />
+                                    <div
+                                        className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 transition-all"
+                                        style={{
+                                            background: esJefeCatedra ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                                            border: esJefeCatedra ? 'none' : '1px solid var(--border-primary)',
+                                        }}
+                                    >
+                                        {esJefeCatedra && <Check size={13} color="#fff" />}
                                     </div>
-                                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                                        Podrá ver evaluaciones de toda su cátedra
-                                    </span>
-                                </div>
-                            </label>
+                                    <div>
+                                        <div className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
+                                            <Shield size={14} style={{ color: 'var(--purple-accent)' }} />
+                                            Soy jefe de cátedra
+                                        </div>
+                                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                                            Podrá ver evaluaciones y vista detallada de toda su cátedra
+                                        </span>
+                                    </div>
+                                </label>
+
+                                <AnimatePresence>
+                                    {esJefeCatedra && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="overflow-hidden pl-3 pr-1 pt-1 pb-1"
+                                        >
+                                            <label
+                                                htmlFor="reg-jefe-catedra"
+                                                className="block text-xs font-semibold uppercase tracking-wider mb-2"
+                                                style={{ color: 'var(--text-muted)' }}
+                                            >
+                                                Cátedra
+                                            </label>
+                                            <div className="relative">
+                                                <BookOpen
+                                                    size={16}
+                                                    className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                                                    style={{ color: 'var(--text-muted)' }}
+                                                />
+                                                <select
+                                                    id="reg-jefe-catedra"
+                                                    value={catedra}
+                                                    onChange={(e) => setCatedra(e.target.value)}
+                                                    required={esJefeCatedra}
+                                                    disabled={catedrasDisponibles.length === 0}
+                                                    className="w-full pl-10 pr-8 py-3 rounded-xl text-sm transition-all duration-200 outline-none cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    style={inputStyle}
+                                                    {...focusHandlers}
+                                                >
+                                                    <option value="">
+                                                        {catedrasDisponibles.length > 0 ? 'Seleccione su cátedra' : 'Todas las cátedras ya tienen un jefe asignado'}
+                                                    </option>
+                                                    {catedrasDisponibles.map((c) => (
+                                                        <option key={c} value={c}>{c}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            {catedrasDisponibles.length === 0 && (
+                                                <p className="text-xs mt-1.5 flex items-center gap-1" style={{ color: 'var(--warning)' }}>
+                                                    <AlertCircle size={12} />
+                                                    Todas las cátedras ya tienen un jefe asignado en el sistema.
+                                                </p>
+                                            )}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                         </div>
 
                         {/* 6. Email de recuperación */}

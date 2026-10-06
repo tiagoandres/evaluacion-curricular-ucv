@@ -7,13 +7,27 @@ import { supabase } from '@/lib/supabase';
 import { mapSupabaseRowToSurveyEntry, SurveyEntry } from '@/data/mockData';
 import { getVistaDetalladaData, getUniqueDepartamentos, getUniqueCatedras, getUniqueAsignaturas, DocenteStats } from '@/data/dataUtils';
 
-export default function VistaDetallada() {
+interface VistaDetalladaProps {
+    filtroRol?: {
+        departamento?: string;
+        catedra?: string;
+    };
+}
+
+export default function VistaDetallada({ filtroRol }: VistaDetalladaProps = {}) {
     const [surveyData, setSurveyData] = useState<SurveyEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const isDeptoLocked = Boolean(filtroRol?.departamento && !filtroRol?.catedra);
+    const isCatedraLocked = Boolean(filtroRol?.catedra && !filtroRol?.departamento);
+
     const [selectedCiclo, setSelectedCiclo] = useState<string | 'all'>('all');
-    const [selectedDepartamento, setSelectedDepartamento] = useState<string | 'all'>('all');
-    const [selectedCatedra, setSelectedCatedra] = useState<string | 'all'>('all');
+    const [selectedDepartamento, setSelectedDepartamento] = useState<string | 'all'>(
+        isDeptoLocked ? (filtroRol?.departamento || 'all') : 'all'
+    );
+    const [selectedCatedra, setSelectedCatedra] = useState<string | 'all'>(
+        isCatedraLocked ? (filtroRol?.catedra || 'all') : 'all'
+    );
     const [selectedAsignatura, setSelectedAsignatura] = useState<string | 'all'>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [rowLimit, setRowLimit] = useState<number | 'all'>(15);
@@ -29,6 +43,15 @@ export default function VistaDetallada() {
     const searchRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
+        if (isDeptoLocked && filtroRol?.departamento) {
+            setSelectedDepartamento(filtroRol.departamento);
+        }
+        if (isCatedraLocked && filtroRol?.catedra) {
+            setSelectedCatedra(filtroRol.catedra);
+        }
+    }, [filtroRol, isDeptoLocked, isCatedraLocked]);
+
+    useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
                 setIsSearchFocused(false);
@@ -41,7 +64,18 @@ export default function VistaDetallada() {
     useEffect(() => {
         async function fetchInfo() {
             setLoading(true);
-            const { data, error } = await supabase.from('datos_limpios').select('*');
+            let query = supabase.from('datos_limpios').select('*');
+
+            if (filtroRol?.departamento && filtroRol?.catedra) {
+                // OR logic: coincide con el departamento O con la cátedra
+                query = query.or(`departamento_evaluado.eq."${filtroRol.departamento}",catedra_evaluada.eq."${filtroRol.catedra}"`);
+            } else if (filtroRol?.departamento) {
+                query = query.eq('departamento_evaluado', filtroRol.departamento);
+            } else if (filtroRol?.catedra) {
+                query = query.eq('catedra_evaluada', filtroRol.catedra);
+            }
+
+            const { data, error } = await query;
             if (error) {
                 console.error('Error fetching data:', error);
             } else if (data) {
@@ -50,7 +84,7 @@ export default function VistaDetallada() {
             setLoading(false);
         }
         fetchInfo();
-    }, []);
+    }, [filtroRol]);
 
     const departamentos = useMemo(() => {
         let optionsData = [...surveyData];
@@ -178,13 +212,22 @@ export default function VistaDetallada() {
 
     const handleClearFilters = () => {
         setSelectedCiclo('all');
-        setSelectedDepartamento('all');
-        setSelectedCatedra('all');
+        if (!isDeptoLocked) {
+            setSelectedDepartamento('all');
+        }
+        if (!isCatedraLocked) {
+            setSelectedCatedra('all');
+        }
         setSelectedAsignatura('all');
         setSearchQuery('');
     };
 
-    const hasActiveFilters = selectedCiclo !== 'all' || selectedDepartamento !== 'all' || selectedCatedra !== 'all' || selectedAsignatura !== 'all' || searchQuery !== '';
+    const hasActiveFilters =
+        selectedCiclo !== 'all' ||
+        (!isDeptoLocked && selectedDepartamento !== 'all') ||
+        (!isCatedraLocked && selectedCatedra !== 'all') ||
+        selectedAsignatura !== 'all' ||
+        searchQuery !== '';
 
     const headers: { label: React.ReactNode; key: keyof DocenteStats }[] = [
         { label: 'Docente', key: 'docente' },
@@ -266,13 +309,21 @@ export default function VistaDetallada() {
                         <select
                             value={selectedDepartamento}
                             onChange={(e) => handleDepartamentoChange(e.target.value)}
-                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate border border-gray-200 dark:border-gray-800 focus:border-indigo-500"
+                            disabled={isDeptoLocked}
+                            title={isDeptoLocked ? 'Departamento fijado por su rol de jefe de departamento' : undefined}
+                            className={`text-sm font-medium rounded-xl px-4 py-3 focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate border border-gray-200 dark:border-gray-800 focus:border-indigo-500 ${
+                                isDeptoLocked ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'
+                            }`}
                             style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                         >
-                            <option value="all">Todos los Departamentos</option>
-                            {departamentos.map(m => (
-                                <option key={m} value={m}>{m}</option>
-                            ))}
+                            {!isDeptoLocked && <option value="all">Todos los Departamentos</option>}
+                            {isDeptoLocked && filtroRol?.departamento ? (
+                                <option value={filtroRol.departamento}>{filtroRol.departamento}</option>
+                            ) : (
+                                departamentos.map(m => (
+                                    <option key={m} value={m}>{m}</option>
+                                ))
+                            )}
                         </select>
                     </div>
 
@@ -280,13 +331,21 @@ export default function VistaDetallada() {
                         <select
                             value={selectedCatedra}
                             onChange={(e) => handleCatedraChange(e.target.value)}
-                            className="text-sm font-medium rounded-xl px-4 py-3 cursor-pointer focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate border border-gray-200 dark:border-gray-800 focus:border-indigo-500"
+                            disabled={isCatedraLocked}
+                            title={isCatedraLocked ? 'Cátedra fijada por su rol de jefe de cátedra' : undefined}
+                            className={`text-sm font-medium rounded-xl px-4 py-3 focus:outline-none focus:ring-2 transition-all shadow-sm w-full truncate border border-gray-200 dark:border-gray-800 focus:border-indigo-500 ${
+                                isCatedraLocked ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'
+                            }`}
                             style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}
                         >
-                            <option value="all">Todas las Cátedras</option>
-                            {catedras.map(c => (
-                                <option key={c} value={c}>{c}</option>
-                            ))}
+                            {!isCatedraLocked && <option value="all">Todas las Cátedras</option>}
+                            {isCatedraLocked && filtroRol?.catedra ? (
+                                <option value={filtroRol.catedra}>{filtroRol.catedra}</option>
+                            ) : (
+                                catedras.map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))
+                            )}
                         </select>
                     </div>
 

@@ -86,11 +86,12 @@ export default function Docentes({ filtroRol, asignaturaForzada, onSelectAsignat
                     mapped = teacherEntries;
                 } else {
                     // Roles no profesor (directora, jefe dpto, jefe cátedra)
-                    if (filtroRol?.departamento) {
+                    if (filtroRol?.departamento && filtroRol?.catedra) {
+                        mapped = mapped.filter(d => d.departamento === filtroRol.departamento || d.catedra === filtroRol.catedra);
+                    } else if (filtroRol?.departamento) {
                         setSelectedDepartamento(filtroRol.departamento);
                         mapped = mapped.filter(d => d.departamento === filtroRol.departamento);
-                    }
-                    if (filtroRol?.catedra) {
+                    } else if (filtroRol?.catedra) {
                         setSelectedCatedra(filtroRol.catedra);
                         mapped = mapped.filter(d => d.catedra === filtroRol.catedra);
                     }

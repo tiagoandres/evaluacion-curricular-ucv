@@ -51,11 +51,12 @@ export default function Asignaturas({ filtroRol }: AsignaturasProps) {
                 let mapped = data.map(mapSupabaseRowToSurveyEntry);
 
                 // Aplicar filtros de rol
-                if (filtroRol?.departamento) {
+                if (filtroRol?.departamento && filtroRol?.catedra) {
+                    mapped = mapped.filter(d => d.departamento === filtroRol.departamento || d.catedra === filtroRol.catedra);
+                } else if (filtroRol?.departamento) {
                     mapped = mapped.filter(d => d.departamento === filtroRol.departamento);
                     setSelectedDepartamento(filtroRol.departamento);
-                }
-                if (filtroRol?.catedra) {
+                } else if (filtroRol?.catedra) {
                     mapped = mapped.filter(d => d.catedra === filtroRol.catedra);
                     setSelectedCatedra(filtroRol.catedra);
                 }
