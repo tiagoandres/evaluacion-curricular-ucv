@@ -94,6 +94,38 @@ export async function obtenerDocentesUnicos(): Promise<string[]> {
 }
 
 /**
+ * Obtiene la lista de docentes de datos_limpios que aún NO tienen una cuenta registrada en usuarios.
+ */
+export async function obtenerDocentesSinCuenta(): Promise<string[]> {
+    const [todosDocentes, { data: usuariosRegistrados, error }] = await Promise.all([
+        obtenerDocentesUnicos(),
+        supabase.from('usuarios').select('nombre_docente_bd'),
+    ]);
+
+    if (error || !usuariosRegistrados) {
+        console.error('Error fetching registered users:', error);
+        return todosDocentes;
+    }
+
+    const registrados = new Set(
+        usuariosRegistrados
+            .map((u: { nombre_docente_bd: string }) => normalizarNombre(u.nombre_docente_bd))
+            .filter(Boolean)
+    );
+
+    return todosDocentes.filter(d => !registrados.has(normalizarNombre(d)));
+}
+
+/**
+ * Obtiene la lista de docentes que ya tienen una cuenta registrada en la tabla usuarios.
+ */
+export async function obtenerDocentesYaRegistrados(): Promise<string[]> {
+    const { data, error } = await supabase.from('usuarios').select('nombre_docente_bd');
+    if (error || !data) return [];
+    return data.map((u: { nombre_docente_bd: string }) => u.nombre_docente_bd).filter(Boolean);
+}
+
+/**
  * Obtiene los departamentos únicos de la tabla datos_limpios.
  */
 export async function obtenerDepartamentosUnicos(): Promise<string[]> {

@@ -10,11 +10,13 @@ import {
 import { useRouter } from 'next/navigation';
 import {
     registrarUsuario,
-    obtenerDocentesUnicos,
+    obtenerDocentesSinCuenta,
+    obtenerDocentesYaRegistrados,
     obtenerDepartamentosSinJefe,
     obtenerCatedrasSinJefe,
     obtenerAsignaturasDocente,
     buscarDocentesSimilares,
+    normalizarNombre,
 } from '@/lib/auth';
 
 export default function RegistroPage() {
@@ -40,6 +42,7 @@ export default function RegistroPage() {
 
     // Data state
     const [docentes, setDocentes] = useState<string[]>([]);
+    const [docentesYaRegistrados, setDocentesYaRegistrados] = useState<string[]>([]);
     const [departamentosDisponibles, setDepartamentosDisponibles] = useState<string[]>([]);
     const [catedrasDisponibles, setCatedrasDisponibles] = useState<string[]>([]);
     const [sugerenciasDocentes, setSugerenciasDocentes] = useState<string[]>([]);
@@ -49,15 +52,17 @@ export default function RegistroPage() {
 
     const sugerenciasRef = useRef<HTMLDivElement>(null);
 
-    // Load initial data (docentes y opciones sin jefe)
+    // Load initial data (solo docentes sin cuenta y opciones sin jefe)
     useEffect(() => {
         async function loadData() {
-            const [docs, deps, cats] = await Promise.all([
-                obtenerDocentesUnicos(),
+            const [docsSinCuenta, docsRegistrados, deps, cats] = await Promise.all([
+                obtenerDocentesSinCuenta(),
+                obtenerDocentesYaRegistrados(),
                 obtenerDepartamentosSinJefe(),
                 obtenerCatedrasSinJefe(),
             ]);
-            setDocentes(docs);
+            setDocentes(docsSinCuenta);
+            setDocentesYaRegistrados(docsRegistrados);
             setDepartamentosDisponibles(deps);
             setCatedrasDisponibles(cats);
         }
@@ -106,6 +111,16 @@ export default function RegistroPage() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // Verificar si el nombre ingresado corresponde a un docente que ya tiene cuenta
+    const docenteYaRegistradoEncontrado = React.useMemo(() => {
+        if (!nombreInput || nombreInput.trim().length < 2) return null;
+        const norm = normalizarNombre(nombreInput);
+        return docentesYaRegistrados.find(d => {
+            const nd = normalizarNombre(d);
+            return nd === norm || (nd.includes(norm) && norm.length >= 4) || (norm.includes(nd) && nd.length >= 4);
+        }) || null;
+    }, [nombreInput, docentesYaRegistrados]);
+
     // Validation
     const passwordsMatch = password.length > 0 && password === passwordConfirm;
     const passwordLongEnough = password.length >= 6;
@@ -116,6 +131,7 @@ export default function RegistroPage() {
 
     const formValido =
         nombreValido &&
+        !docenteYaRegistradoEncontrado &&
         emailValido &&
         deptoValido &&
         catedraValida &&
@@ -330,12 +346,33 @@ export default function RegistroPage() {
                             </AnimatePresence>
 
                             {/* Info text */}
-                            {nombreInput.length >= 2 && !nombreDocenteBd && sugerenciasDocentes.length === 0 && (
+                            {docenteYaRegistradoEncontrado && !nombreDocenteBd ? (
+                                <div
+                                    className="text-xs mt-2 p-3 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 border"
+                                    style={{
+                                        background: 'rgba(239, 68, 68, 0.08)',
+                                        color: 'var(--danger)',
+                                        borderColor: 'rgba(239, 68, 68, 0.25)',
+                                    }}
+                                >
+                                    <span className="flex items-center gap-1.5 font-medium">
+                                        <AlertCircle size={14} className="shrink-0" />
+                                        <span>El/la docente <strong>{docenteYaRegistradoEncontrado}</strong> ya tiene una cuenta registrada.</span>
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => router.push('/login')}
+                                        className="font-semibold underline cursor-pointer hover:opacity-80 shrink-0 text-left sm:text-right"
+                                    >
+                                        Iniciar sesión aquí
+                                    </button>
+                                </div>
+                            ) : nombreInput.length >= 2 && !nombreDocenteBd && sugerenciasDocentes.length === 0 ? (
                                 <p className="text-xs mt-1.5 flex items-center gap-1" style={{ color: 'var(--danger)' }}>
                                     <AlertCircle size={12} />
-                                    No se encontró un docente con ese nombre en el sistema.
+                                    No se encontró un docente disponible para registrarse con ese nombre.
                                 </p>
-                            )}
+                            ) : null}
                             {nombreDocenteBd && (
                                 <div className="mt-2 space-y-2">
                                     <p className="text-xs flex items-center gap-1 font-medium" style={{ color: 'var(--success)' }}>
